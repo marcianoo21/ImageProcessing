@@ -59,10 +59,23 @@ def doHorizontalFlip(arr):
     arr = arr[:, ::-1]
     return arr
 
+
 def doDiagonalFlip(arr):  
     print("Diagonal flip action")
     arr = arr[::-1, ::-1]
     return arr
+
+
+def doShrink(param, arr):
+    print("Shrunk image")
+    scale_factor = 2**int(param)
+    arr = arr[::scale_factor, ::scale_factor]
+    return arr
+
+
+def doEnlarge(param, arr):
+    print("Enlarged image")
+   
 
 if len(sys.argv) == 1:
     print("No command line parameters given.\n")
@@ -90,6 +103,10 @@ else:
         arr = doBrightness(param, arr)
     elif command == '--contrast':
         arr = doContrast(param, arr)
+    elif command == '--shrink':
+        arr = doShrink(param, arr)
+    elif command == '--enlarge':
+        arr = doEnlarge(param, arr)
     else:
         print("Unknown command: " + command)
         sys.exit()
