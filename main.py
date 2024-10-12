@@ -2,21 +2,33 @@ from PIL import Image
 import numpy as np
 import sys
 
-
 im = Image.open("lenac.bmp")
+im_noised = Image.open("lenac_noised.bmp")
 
-arr = np.array(im.getdata())
+im_noised_resized = im_noised.resize(im.size)
+
+arr = np.array(im)
+arr_noised = np.array(im_noised_resized)
+
 if arr.ndim == 1: 
     numColorChannels = 1
     arr = arr.reshape(im.size[1], im.size[0])
 else:
-    numColorChannels = arr.shape[1]
+    numColorChannels = arr.shape[2]  
     arr = arr.reshape(im.size[1], im.size[0], numColorChannels)
 
-# newIm = Image.fromarray(arr.astype(np.uint8))
-# new_size = (255, 255)
-# newIm = newIm.resize(new_size)
-# newIm.save("result.bmp")
+if arr_noised.ndim == 1: 
+    numColorChannels = 1
+    arr_noised = arr_noised.reshape(im.size[1], im.size[0])
+else:
+    numColorChannels = arr_noised.shape[2]  
+    arr_noised = arr_noised.reshape(im.size[1], im.size[0], numColorChannels)
+
+
+# print("Image shape (original): " + str(arr.shape))
+# print("Image shape (noised resized): " + str(arr_noised.shape))
+# print("Number of color channels: " + str(numColorChannels))
+
 
 
 
@@ -75,7 +87,22 @@ def doShrink(param, arr):
 
 def doEnlarge(param, arr):
     print("Enlarged image")
-   
+
+
+def mse(arr1, arr2):
+    if len(arr1) != len(arr2) or len(arr1[0]) != len(arr2[0]):
+        print("Images are not the same size.")
+    else:
+        M = len(arr1)
+        N = len(arr1[0])
+        sum = 0
+        for i in range(M):
+            for j in range(N):
+                sum += (arr1[i][j] - arr2[i][j])**2
+        mse_value = sum / (M * N)
+        print("Mean Squared Error: " + str(mse_value))
+        return sum / (M * N)
+  
 
 if len(sys.argv) == 1:
     print("No command line parameters given.\n")
@@ -94,6 +121,8 @@ if len(sys.argv) == 2:
         arr = doHorizontalFlip(arr)
     elif command == '--dflip':
         arr = doDiagonalFlip(arr)
+    elif command == '--mse':
+        mse_value = mse(arr, arr_noised)
     else:
         print("Too few command line parameters given.\n")
         sys.exit()
@@ -107,6 +136,14 @@ else:
         arr = doShrink(param, arr)
     elif command == '--enlarge':
         arr = doEnlarge(param, arr)
+    elif command == 'pmse':
+        pass
+    elif command == '--snr':
+        pass
+    elif command == '--psnr':
+        pass
+    elif command == 'md':
+        pass
     else:
         print("Unknown command: " + command)
         sys.exit()
