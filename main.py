@@ -100,9 +100,43 @@ def mse(arr1, arr2):
             for j in range(N):
                 sum += (arr1[i][j] - arr2[i][j])**2
         mse_value = sum / (M * N)
-        print("Mean Squared Error: " + str(mse_value))
-        return sum / (M * N)
+        
+        return mse_value
   
+
+def pmse(arr1, arr2): 
+    if len(arr1) != len(arr2) or len(arr1[0]) != len(arr2[0]):
+        print("Images are not the same size.")
+    else:
+        M = len(arr1)
+        N = len(arr1[0])
+        sum = 0
+        max_value = np.max(arr1) 
+        for i in range(M):
+            for j in range(N):
+                sum += ((arr1[i][j] - arr2[i][j])**2 ) / (max_value**2)
+        pmse_value = sum / (M * N)
+    return pmse_value
+
+
+def snr(arr1, arr2):
+    if len(arr1) != len(arr2) or len(arr1[0]) != len(arr2[0]):
+        print("Images are not the same size.")
+    else:
+        M = len(arr1)
+        N = len(arr1[0])
+        sum1 = 0
+        sum2 = 0
+        for i in range(M):
+            for j in range(N):
+                sum1 += arr1[i][j]**2
+                sum2 += (arr1[i][j] - arr2[i][j])**2
+        if np.all(sum2 == 0): 
+            return float('inf')  
+     
+        snr_value = 10*(np.log10(sum1 / sum2)) 
+    return snr_value
+                
 
 if len(sys.argv) == 1:
     print("No command line parameters given.\n")
@@ -123,6 +157,13 @@ if len(sys.argv) == 2:
         arr = doDiagonalFlip(arr)
     elif command == '--mse':
         mse_value = mse(arr, arr_noised)
+        print("Mean Squared Error: " + str(mse_value))
+    elif command == '--pmse':
+        pmse_value = pmse(arr, arr_noised)
+        print("Peak mean square error: " + str(pmse_value))
+    elif command == '--snr':
+        snr_value = snr(arr, arr_noised)
+        print("Signal to noise ratio: " + str(snr_value))
     else:
         print("Too few command line parameters given.\n")
         sys.exit()
@@ -136,13 +177,11 @@ else:
         arr = doShrink(param, arr)
     elif command == '--enlarge':
         arr = doEnlarge(param, arr)
-    elif command == 'pmse':
-        pass
     elif command == '--snr':
         pass
     elif command == '--psnr':
         pass
-    elif command == 'md':
+    elif command == '--md':
         pass
     else:
         print("Unknown command: " + command)
