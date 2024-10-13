@@ -57,6 +57,8 @@ def doNegative(arr):
 
 def doDefault(arr):
     print("Default action")
+    im = Image.open("lenac.bmp")
+    arr = np.array(im)
     return arr
 
 
@@ -134,8 +136,17 @@ def snr(arr1, arr2):
         if np.all(sum2 == 0): 
             return float('inf')  
      
-        snr_value = 10*(np.log10(sum1 / sum2)) 
+        snr_value = 10*np.log10(sum1 / sum2)
     return snr_value
+
+
+def psnr(arr1, arr2):
+    max_value = np.max(arr1)
+    mse_value = mse(arr1, arr2)
+    psnr_value = 10*np.log10(max_value**2 / mse_value)
+
+    return psnr_value 
+
                 
 
 if len(sys.argv) == 1:
@@ -164,6 +175,9 @@ if len(sys.argv) == 2:
     elif command == '--snr':
         snr_value = snr(arr, arr_noised)
         print("Signal to noise ratio: " + str(snr_value))
+    elif command == '--psnr':
+        psnr_value = psnr(arr, arr_noised)
+        print("Peak signal to noise ratio: " + str(psnr_value))
     else:
         print("Too few command line parameters given.\n")
         sys.exit()
