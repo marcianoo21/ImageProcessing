@@ -147,6 +147,24 @@ def psnr(arr1, arr2):
 
     return psnr_value 
 
+
+def max_diff(arr1, arr2):
+    M = len(arr1)
+    N = len(arr1[0])
+    K = len(arr1[0][0])
+    print(M, N, K)
+    pivot = 0
+    for i in range(M):
+        for j in range(N):
+            for k in range(K):
+                diff = abs(arr1[i][j][k] - arr2[i][j][k])
+                if diff > pivot:
+                    pivot = diff
+
+    return pivot
+# nie mam pewności czy dobrze
+
+
                 
 
 if len(sys.argv) == 1:
@@ -178,6 +196,9 @@ if len(sys.argv) == 2:
     elif command == '--psnr':
         psnr_value = psnr(arr, arr_noised)
         print("Peak signal to noise ratio: " + str(psnr_value))
+    elif command == '--md':
+        md_value = max_diff(arr, arr_noised)
+        print("Max difference: " + str(md_value))
     else:
         print("Too few command line parameters given.\n")
         sys.exit()
