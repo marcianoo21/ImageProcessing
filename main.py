@@ -2,7 +2,7 @@ from PIL import Image
 import numpy as np
 import sys
 
-im = Image.open("lenac.bmp")
+im = Image.open("lena.bmp")
 im_noised = Image.open("lenac_noised.bmp")
 
 im_noised_resized = im_noised.resize(im.size)
@@ -114,6 +114,7 @@ def mse(arr1, arr2):
         return mse_value
 
 
+# Można urzyć wbudowanych funkcji do obliczenia MSE
 def pmse(arr1, arr2): 
     if len(arr1) != len(arr2) or len(arr1[0]) != len(arr2[0]):
         print("Images are not the same size.")
@@ -128,7 +129,7 @@ def pmse(arr1, arr2):
         pmse_value = sum / (M * N)
     return pmse_value
 
-
+# Podobnie tutaj
 def snr(arr1, arr2):
     if len(arr1) != len(arr2) or len(arr1[0]) != len(arr2[0]):
         print("Images are not the same size.")
