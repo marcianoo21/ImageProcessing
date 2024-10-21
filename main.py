@@ -2,6 +2,7 @@ from PIL import Image
 import numpy as np
 import sys
 
+
 im = Image.open("lena.bmp")
 im_noised = Image.open("lenac_noised.bmp")
 
@@ -94,9 +95,50 @@ def doShrink(param, arr):
 
 def doEnlarge(param, arr):
     print("Enlarged image")
-    scale_factor = 2**int(param)
+    scale_factor = int(param)
     arr = np.repeat(np.repeat(arr, scale_factor, axis=0), scale_factor, axis=1)
     return arr
+
+def min_filter(arr, kernel_size=3):
+    output = np.zeros_like(arr)
+    padded_arr = np.pad(arr, kernel_size // 2, mode='edge')
+
+    for i in range(arr.shape[0]):
+        for j in range(arr.shape[1]):
+            output[i, j] = np.min(padded_arr[i:i+kernel_size, j:j+kernel_size])
+
+    return output
+
+def max_filter(arr, kernel_size=3):
+    output = np.zeros_like(arr)
+    padded_arr = np.pad(arr, kernel_size // 2, mode='edge')
+
+    for i in range(arr.shape[0]):
+        for j in range(arr.shape[1]):
+            output[i, j] = np.max(padded_arr[i:i+kernel_size, j:j+kernel_size])
+
+    return output
+
+def adaptive_median_filter(arr, max_kernel_size=7):
+    output = np.copy(arr)
+    padded_arr = np.pad(arr, max_kernel_size // 2, mode='edge')
+
+    for i in range(arr.shape[0]):
+        for j in range(arr.shape[1]):
+            for k_size in range(3, max_kernel_size+1, 2):
+                region = padded_arr[i:i+k_size, j:j+k_size]
+                sorted_region = np.sort(region.flatten())
+                min_val, med_val, max_val = sorted_region[0], np.median(sorted_region), sorted_region[-1]
+                
+                if med_val > min_val and med_val < max_val:
+                    if arr[i, j] > min_val and arr[i, j] < max_val:
+                        output[i, j] = arr[i, j]
+                    else:
+                        output[i, j] = med_val
+                    break
+
+    return output
+
 
 
 def mse(arr1, arr2):
@@ -204,6 +246,15 @@ if len(sys.argv) == 2:
     elif command == '--md':
         md_value = max_diff(arr, arr_noised)
         print("Max difference: " + str(md_value))
+    elif command == '--min':
+        arr = min_filter(arr_noised)
+        print("Min filter applied.")
+    elif command == '--max':
+        arr = max_filter(arr_noised)
+        print("Max filter applied.")
+    elif command == '--adaptive':
+        arr = adaptive_median_filter(arr) # nie dziala dla zakłłóconego obrazku
+        print("Adaptive median filter applied.")
     else:
         print("Too few command line parameters given.\n")
         sys.exit()
