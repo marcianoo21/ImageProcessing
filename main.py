@@ -3,8 +3,8 @@ import numpy as np
 import sys
 
 
-im = Image.open("lena.bmp")
-im_noised = Image.open("lenac_noised.bmp")
+im = Image.open("lenac.bmp")
+im_noised = Image.open("result.bmp")
 
 im_noised_resized = im_noised.resize(im.size)
 
@@ -120,6 +120,16 @@ def max_filter(arr, kernel_size=3):
     return output
 
 def adaptive_median_filter(arr, max_kernel_size=7):
+    if arr.ndim == 2:  # Grayscale image
+        return _apply_adaptive_median(arr, max_kernel_size)
+    elif arr.ndim == 3:  # Color image
+        # Apply the filter on each color channel independently
+        filtered_channels = [ _apply_adaptive_median(arr[:, :, ch], max_kernel_size) for ch in range(arr.shape[2])]
+        return np.stack(filtered_channels, axis=-1)
+    else:
+        raise ValueError("Unsupported image format for adaptive median filter")
+
+def _apply_adaptive_median(arr, max_kernel_size):
     output = np.copy(arr)
     padded_arr = np.pad(arr, max_kernel_size // 2, mode='edge')
 
@@ -129,7 +139,7 @@ def adaptive_median_filter(arr, max_kernel_size=7):
                 region = padded_arr[i:i+k_size, j:j+k_size]
                 sorted_region = np.sort(region.flatten())
                 min_val, med_val, max_val = sorted_region[0], np.median(sorted_region), sorted_region[-1]
-                
+
                 if med_val > min_val and med_val < max_val:
                     if arr[i, j] > min_val and arr[i, j] < max_val:
                         output[i, j] = arr[i, j]
@@ -246,14 +256,14 @@ if len(sys.argv) == 2:
     elif command == '--md':
         md_value = max_diff(arr, arr_noised)
         print("Max difference: " + str(md_value))
-    elif command == '--min':
+    if command == '--min':
         arr = min_filter(arr_noised)
         print("Min filter applied.")
     elif command == '--max':
         arr = max_filter(arr_noised)
         print("Max filter applied.")
     elif command == '--adaptive':
-        arr = adaptive_median_filter(arr) # nie dziala dla zakłłóconego obrazku
+        arr = adaptive_median_filter(arr_noised)
         print("Adaptive median filter applied.")
     else:
         print("Too few command line parameters given.\n")
@@ -268,12 +278,6 @@ else:
         arr = doShrink(param, arr)
     elif command == '--enlarge':
         arr = doEnlarge(param, arr)
-    elif command == '--snr':
-        pass
-    elif command == '--psnr':
-        pass
-    elif command == '--md':
-        pass
     else:
         print("Unknown command: " + command)
         sys.exit()
