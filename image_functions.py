@@ -48,7 +48,7 @@ def doNegative(arr):
 
 def doDefault(arr):
     print("Default action")
-    im = Image.open("lenac.bmp")
+    im = Image.open("./images/lena_24bits.bmp")
     arr = np.array(im)
     return arr
 

@@ -62,7 +62,6 @@ def print_help():
 
 im = Image.open("./images/lena_8bits.bmp")
 
-im = Image.open("lenac.bmp")
 im_noised = Image.open("result.bmp")
 
 im_noised_resized = im_noised.resize(im.size)
