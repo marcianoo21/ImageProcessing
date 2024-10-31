@@ -1,6 +1,7 @@
 from PIL import Image
 import numpy as np
 import sys
+
 from image_functions import (doBrightness, doContrast, doNegative, 
                              doDefault, doVerticalFlip, doHorizontalFlip, 
                              doDiagonalFlip, doShrink, doEnlarge, min_filter, max_filter, adaptive_median_filter)
@@ -60,6 +61,8 @@ def print_help():
     print(help_text)
 
 im = Image.open("./images/lena_8bits.bmp")
+
+im = Image.open("lenac.bmp")
 im_noised = Image.open("result.bmp")
 
 im_noised_resized = im_noised.resize(im.size)
@@ -134,20 +137,21 @@ if len(sys.argv) == 2:
         case _:
             print("Unknown command: " + command)
             sys.exit()
+
 else:
     param = sys.argv[2]
-    match command:
-        case '--brightness':
-            arr = doBrightness(param, arr)
-        case '--contrast':
-            arr = doContrast(param, arr)
-        case '--shrink':
-            arr = doShrink(param, arr)
-        case '--enlarge':
-            arr = doEnlarge(param, arr)
-        case _:
-            print("Unknown command: " + command)
-            sys.exit()
+    if command == '--brightness':
+        arr = doBrightness(param, arr)
+    elif command == '--contrast':
+        arr = doContrast(param, arr)
+    elif command == '--shrink':
+        arr = doShrink(param, arr)
+    elif command == '--enlarge':
+        arr = doEnlarge(param, arr)
+    else:
+        print("Unknown command: " + command)
+        sys.exit()
+
 
 newIm = Image.fromarray(arr.astype(np.uint8))
 newIm.save("result.bmp")
