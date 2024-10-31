@@ -2,6 +2,65 @@ from PIL import Image
 import numpy as np
 import sys
 
+from image_functions import (doBrightness, doContrast, doNegative, 
+                             doDefault, doVerticalFlip, doHorizontalFlip, 
+                             doDiagonalFlip, doShrink, doEnlarge, min_filter, max_filter, adaptive_median_filter)
+
+def print_help():
+    help_text = """
+    Available Commands:
+    
+    --help                : Show this help message and exit.
+    
+    --negative            : Apply a negative filter to the image.
+    
+    --default             : Reset the image to the original state.
+    
+    --vflip               : Apply vertical flip to the image.
+    
+    --hflip               : Apply horizontal flip to the image.
+    
+    --dflip               : Apply diagonal flip to the image.
+    
+    --brightness <val>    : Adjust brightness by the specified value. Range: [-255, 255].
+                            Example: --brightness 50 increases brightness; --brightness -50 decreases it.
+    
+    --contrast <val>      : Adjust contrast by the specified factor. Range: [0, 5.0].
+                            Example: --contrast 1.2 increases contrast by 20%; --contrast 0.8 decreases it.
+    
+    --shrink <val>        : Shrink the image by a specific factor. Range: (1.0, 5.0].
+                            Example: --shrink 1.5 shrinks the image by 1.5x.
+    
+    --enlarge <val>       : Enlarge the image by a specific factor. Range: (1.0, 5.0].
+                            Example: --enlarge 1.5 enlarges the image by 1.5x.
+    
+    --min                 : Apply a minimum filter with a kernel to reduce noise.
+                            Example: --min (applies a 3x3 minimum filter kernel).
+    
+    --max                 : Apply a maximum filter with a kernel to enhance details.
+                            Example: --max (applies a 3x3 maximum filter kernel).
+    
+    --adaptive            : Apply adaptive median filtering to reduce noise. Max kernel size: 7.
+                            Example: --adaptive (applies adaptive median filtering up to kernel size 7).
+    
+    --mse                 : Calculate Mean Squared Error between original and noised image.
+                            Example: --mse
+    
+    --pmse                : Calculate Peak Mean Square Error.
+                            Example: --pmse
+    
+    --snr                 : Calculate Signal-to-Noise Ratio.
+                            Example: --snr
+    
+    --psnr                : Calculate Peak Signal-to-Noise Ratio.
+                            Example: --psnr
+    
+    --md                  : Calculate the maximum difference between the original and noised image.
+                            Example: --md
+    """
+    print(help_text)
+
+im = Image.open("./images/lena_8bits.bmp")
 
 im = Image.open("lenac.bmp")
 im_noised = Image.open("result.bmp")
@@ -30,200 +89,6 @@ elif arr_noised.ndim == 3:  # Kolorowy obraz
 else:
     raise ValueError("Nieobsługiwany format obrazu z szumem")
 
-
-# print("Image shape (original): " + str(arr.shape))
-# print("Image shape (noised resized): " + str(arr_noised.shape))
-# print("Number of color channels: " + str(numColorChannels))
-
-
-
-
-
-def doBrightness(param, arr):
-    print("Function doBrightness invoked with param: " + str(param))
-    arr += int(param)
-    arr[arr > 255] = 255  
-    arr[arr < 0] = 0 
-
-def doContrast(param, arr):
-    print("Function doContrast invoked with param: " + param)
-    arr = (arr - 128) * float(param) + 128
-    arr[arr > 255] = 255  
-    arr[arr < 0] = 0  
-    return arr
-
-
-def doNegative(arr):
-    print("Negative action")
-    arr = 255 - arr
-    arr[arr > 255] = 255  
-    arr[arr < 0] = 0  
-    return arr
-
-
-def doDefault(arr):
-    print("Default action")
-    im = Image.open("lenac.bmp")
-    arr = np.array(im)
-    return arr
-
-
-def doVerticalFlip(arr):
-    print("Vertical flip action")
-    arr = arr[::-1]
-    return arr
-
-
-def doHorizontalFlip(arr):
-    print("Horizontal flip action")
-    arr = arr[:, ::-1]
-    return arr
-
-
-def doDiagonalFlip(arr):  
-    print("Diagonal flip action")
-    arr = arr[::-1, ::-1]
-    return arr
-
-
-def doShrink(param, arr):
-    print("Shrunk image")
-    scale_factor = int(param)
-    arr = arr[::scale_factor, ::scale_factor]
-    return arr
-
-
-def doEnlarge(param, arr):
-    print("Enlarged image")
-    scale_factor = int(param)
-    arr = np.repeat(np.repeat(arr, scale_factor, axis=0), scale_factor, axis=1)
-    return arr
-
-def min_filter(arr, kernel_size=3):
-    output = np.zeros_like(arr)
-    padded_arr = np.pad(arr, kernel_size // 2, mode='edge')
-
-    for i in range(arr.shape[0]):
-        for j in range(arr.shape[1]):
-            output[i, j] = np.min(padded_arr[i:i+kernel_size, j:j+kernel_size])
-
-    return output
-
-def max_filter(arr, kernel_size=3):
-    output = np.zeros_like(arr)
-    padded_arr = np.pad(arr, kernel_size // 2, mode='edge')
-
-    for i in range(arr.shape[0]):
-        for j in range(arr.shape[1]):
-            output[i, j] = np.max(padded_arr[i:i+kernel_size, j:j+kernel_size])
-
-    return output
-
-def adaptive_median_filter(arr, max_kernel_size=7):
-    if arr.ndim == 2:  # Grayscale image
-        return _apply_adaptive_median(arr, max_kernel_size)
-    elif arr.ndim == 3:  # Color image
-        # Apply the filter on each color channel independently
-        filtered_channels = [ _apply_adaptive_median(arr[:, :, ch], max_kernel_size) for ch in range(arr.shape[2])]
-        return np.stack(filtered_channels, axis=-1)
-    else:
-        raise ValueError("Unsupported image format for adaptive median filter")
-
-def _apply_adaptive_median(arr, max_kernel_size):
-    output = np.copy(arr)
-    padded_arr = np.pad(arr, max_kernel_size // 2, mode='edge')
-
-    for i in range(arr.shape[0]):
-        for j in range(arr.shape[1]):
-            for k_size in range(3, max_kernel_size+1, 2):
-                region = padded_arr[i:i+k_size, j:j+k_size]
-                sorted_region = np.sort(region.flatten())
-                min_val, med_val, max_val = sorted_region[0], np.median(sorted_region), sorted_region[-1]
-
-                if med_val > min_val and med_val < max_val:
-                    if arr[i, j] > min_val and arr[i, j] < max_val:
-                        output[i, j] = arr[i, j]
-                    else:
-                        output[i, j] = med_val
-                    break
-
-    return output
-
-
-
-def mse(arr1, arr2):
-    if len(arr1) != len(arr2) or len(arr1[0]) != len(arr2[0]):
-        print("Images are not the same size.")
-    else:
-        M = len(arr1)
-        N = len(arr1[0])
-        sum = 0
-        for i in range(M):
-            for j in range(N):
-                sum += (arr1[i][j] - arr2[i][j])**2
-        mse_value = sum / (M * N)
-
-        return mse_value
-
-
-# Można urzyć wbudowanych funkcji do obliczenia MSE
-def pmse(arr1, arr2): 
-    if len(arr1) != len(arr2) or len(arr1[0]) != len(arr2[0]):
-        print("Images are not the same size.")
-    else:
-        M = len(arr1)
-        N = len(arr1[0])
-        sum = 0
-        max_value = np.max(arr1) 
-        for i in range(M):
-            for j in range(N):
-                sum += ((arr1[i][j] - arr2[i][j])**2 ) / (max_value**2)
-        pmse_value = sum / (M * N)
-    return pmse_value
-
-# Podobnie tutaj
-def snr(arr1, arr2):
-    if len(arr1) != len(arr2) or len(arr1[0]) != len(arr2[0]):
-        print("Images are not the same size.")
-    else:
-        M = len(arr1)
-        N = len(arr1[0])
-        sum1 = 0
-        sum2 = 0
-        for i in range(M):
-            for j in range(N):
-                sum1 += arr1[i][j]**2
-                sum2 += (arr1[i][j] - arr2[i][j])**2
-        if np.all(sum2 == 0): 
-            return float('inf')  
-
-        snr_value = 10*np.log10(sum1 / sum2)
-    return snr_value
-
-
-def psnr(arr1, arr2):
-    max_value = np.max(arr1)
-    mse_value = mse(arr1, arr2)
-    psnr_value = 10*np.log10(max_value**2 / mse_value)
-
-    return psnr_value 
-    
-
-def max_diff(arr1, arr2):
-    M = len(arr1)
-    N = len(arr1[0])
-    K = len(arr1[0][0])
-    print(M, N, K)
-    pivot = 0
-    for i in range(M):
-        for j in range(N):
-            for k in range(K):
-                diff = abs(arr1[i][j][k] - arr2[i][j][k])
-                if diff > pivot:
-                    pivot = diff
-    return pivot
-
-
 if len(sys.argv) == 1:
     print("No command line parameters given.\n")
     sys.exit()
@@ -231,43 +96,48 @@ if len(sys.argv) == 1:
 command = sys.argv[1]
 
 if len(sys.argv) == 2:
-    if command == '--negative':
-        arr = doNegative(arr)
-    elif command == '--default':
-        arr = doDefault(arr)
-    elif command == '--vflip':
-        arr = doVerticalFlip(arr)
-    elif command == '--hflip':
-        arr = doHorizontalFlip(arr)
-    elif command == '--dflip':
-        arr = doDiagonalFlip(arr)
-    elif command == '--mse':
-        mse_value = mse(arr, arr_noised)
-        print("Mean Squared Error: " + str(mse_value))
-    elif command == '--pmse':
-        pmse_value = pmse(arr, arr_noised)
-        print("Peak mean square error: " + str(pmse_value))
-    elif command == '--snr':
-        snr_value = snr(arr, arr_noised)
-        print("Signal to noise ratio: " + str(snr_value))
-    elif command == '--psnr':
-        psnr_value = psnr(arr, arr_noised)
-        print("Peak signal to noise ratio: " + str(psnr_value))
-    elif command == '--md':
-        md_value = max_diff(arr, arr_noised)
-        print("Max difference: " + str(md_value))
-    if command == '--min':
-        arr = min_filter(arr_noised)
-        print("Min filter applied.")
-    elif command == '--max':
-        arr = max_filter(arr_noised)
-        print("Max filter applied.")
-    elif command == '--adaptive':
-        arr = adaptive_median_filter(arr_noised)
-        print("Adaptive median filter applied.")
-    else:
-        print("Too few command line parameters given.\n")
-        sys.exit()
+    match command:
+        case '--help':
+            print_help()
+            sys.exit()
+        case '--negative':
+            arr = doNegative(arr)
+        case '--default':
+            arr = doDefault(arr)
+        case '--vflip':
+            arr = doVerticalFlip(arr)
+        case '--hflip':
+            arr = doHorizontalFlip(arr)
+        case '--dflip':
+            arr = doDiagonalFlip(arr)
+        case '--mse':
+            mse_value = mse(arr, arr_noised)
+            print("Mean Squared Error: " + str(mse_value))
+        case '--pmse':
+            pmse_value = pmse(arr, arr_noised)
+            print("Peak mean square error: " + str(pmse_value))
+        case '--snr':
+            snr_value = snr(arr, arr_noised)
+            print("Signal to noise ratio: " + str(snr_value))
+        case '--psnr':
+            psnr_value = psnr(arr, arr_noised)
+            print("Peak signal to noise ratio: " + str(psnr_value))
+        case '--md':
+            md_value = max_diff(arr, arr_noised)
+            print("Max difference: " + str(md_value))
+        case '--min':
+            arr = min_filter(arr_noised)
+            print("Min filter applied.")
+        case '--max':
+            arr = max_filter(arr_noised)
+            print("Max filter applied.")
+        case '--adaptive':
+            arr = adaptive_median_filter(arr_noised)
+            print("Adaptive median filter applied.")
+        case _:
+            print("Unknown command: " + command)
+            sys.exit()
+
 else:
     param = sys.argv[2]
     if command == '--brightness':
