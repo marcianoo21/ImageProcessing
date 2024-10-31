@@ -59,7 +59,7 @@ def print_help():
     """
     print(help_text)
 
-im = Image.open("./images/lena_24bits.bmp")
+im = Image.open("./images/lena_8bits.bmp")
 im_noised = Image.open("result.bmp")
 
 im_noised_resized = im_noised.resize(im.size)

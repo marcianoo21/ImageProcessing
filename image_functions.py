@@ -117,13 +117,25 @@ def min_filter(arr, kernel_size=3):
 
     return output
 
-def max_filter(arr, kernel_size=3):
-    output = np.zeros_like(arr)
-    padded_arr = np.pad(arr, kernel_size // 2, mode='edge')
+def min_filter(arr, kernel_size=3):
+    output = np.zeros_like(arr, dtype=np.uint8)
+    padded_arr = np.pad(arr, ((kernel_size // 2, kernel_size // 2), (kernel_size // 2, kernel_size // 2), (0, 0)), mode='edge')
 
     for i in range(arr.shape[0]):
         for j in range(arr.shape[1]):
-            output[i, j] = np.max(padded_arr[i:i+kernel_size, j:j+kernel_size])
+            for k in range(arr.shape[2]):  # Loop through each color channel
+                output[i, j, k] = np.min(padded_arr[i:i+kernel_size, j:j+kernel_size, k])
+
+    return output
+
+def max_filter(arr, kernel_size=3):
+    output = np.zeros_like(arr, dtype=np.uint8)
+    padded_arr = np.pad(arr, ((kernel_size // 2, kernel_size // 2), (kernel_size // 2, kernel_size // 2), (0, 0)), mode='edge')
+
+    for i in range(arr.shape[0]):
+        for j in range(arr.shape[1]):
+            for k in range(arr.shape[2]):  # Loop through each color channel
+                output[i, j, k] = np.max(padded_arr[i:i+kernel_size, j:j+kernel_size, k])
 
     return output
 
@@ -132,7 +144,7 @@ def adaptive_median_filter(arr, max_kernel_size=7):
         return _apply_adaptive_median(arr, max_kernel_size)
     elif arr.ndim == 3:  # Color image
         # Apply the filter on each color channel independently
-        filtered_channels = [ _apply_adaptive_median(arr[:, :, ch], max_kernel_size) for ch in range(arr.shape[2])]
+        filtered_channels = [_apply_adaptive_median(arr[:, :, ch], max_kernel_size) for ch in range(arr.shape[2])]
         return np.stack(filtered_channels, axis=-1)
     else:
         raise ValueError("Unsupported image format for adaptive median filter")
@@ -143,8 +155,8 @@ def _apply_adaptive_median(arr, max_kernel_size):
 
     for i in range(arr.shape[0]):
         for j in range(arr.shape[1]):
-            for k_size in range(3, max_kernel_size+1, 2):
-                region = padded_arr[i:i+k_size, j:j+k_size]
+            for k_size in range(3, max_kernel_size + 1, 2):
+                region = padded_arr[i:i + k_size, j:j + k_size]
                 sorted_region = np.sort(region.flatten())
                 min_val, med_val, max_val = sorted_region[0], np.median(sorted_region), sorted_region[-1]
 
