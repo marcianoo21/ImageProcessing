@@ -108,16 +108,6 @@ def doEnlarge(param, arr):
     return enlarged_image
 
 def min_filter(arr, kernel_size=3):
-    output = np.zeros_like(arr)
-    padded_arr = np.pad(arr, kernel_size // 2, mode='edge')
-
-    for i in range(arr.shape[0]):
-        for j in range(arr.shape[1]):
-            output[i, j] = np.min(padded_arr[i:i+kernel_size, j:j+kernel_size])
-
-    return output
-
-def min_filter(arr, kernel_size=3):
     output = np.zeros_like(arr, dtype=np.uint8)
     padded_arr = np.pad(arr, ((kernel_size // 2, kernel_size // 2), (kernel_size // 2, kernel_size // 2), (0, 0)), mode='edge')
 
