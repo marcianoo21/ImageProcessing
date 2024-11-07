@@ -19,7 +19,7 @@ def doBrightness(param, arr):
     arr[arr < 0] = 0    
     return arr.astype(np.uint8) 
 
-def doContrast(param, arr):
+def doContrast(param, arr): #dodac 'b' w y=ax+b 
     try:
         param = float(param)
     except ValueError:
@@ -107,29 +107,71 @@ def doEnlarge(param, arr):
     ])
     return enlarged_image
 
-def min_filter(arr, kernel_size=3):
+# def min_filter(arr, kernel_size=2):
+#     output = np.zeros_like(arr, dtype=np.uint8)
+#     padded_arr = np.pad(arr, ((kernel_size // 2, kernel_size // 2), (kernel_size // 2, kernel_size // 2), (0, 0)), mode='edge')
+
+#     for i in range(arr.shape[0]):
+#         for j in range(arr.shape[1]):
+#             for k in range(arr.shape[2]):  # Loop through each color channel
+#                 output[i, j, k] = np.min(padded_arr[i:i+kernel_size, j:j+kernel_size, k])
+
+#     return output
+
+def min_filter(arr, kernel_size=2):
+    if arr.ndim == 2:  # Grayscale image
+        return _apply_min_filter(arr, kernel_size)
+    elif arr.ndim == 3:  # Color image
+        # Apply the filter on each color channel independently
+        filtered_channels = [_apply_min_filter(arr[:, :, ch], kernel_size) for ch in range(arr.shape[2])]
+        return np.stack(filtered_channels, axis=-1)
+    else:
+        raise ValueError("Unsupported image format for min filter")
+
+def _apply_min_filter(arr, kernel_size):
     output = np.zeros_like(arr, dtype=np.uint8)
-    padded_arr = np.pad(arr, ((kernel_size // 2, kernel_size // 2), (kernel_size // 2, kernel_size // 2), (0, 0)), mode='edge')
+    padded_arr = np.pad(arr, kernel_size // 2, mode='edge')
 
     for i in range(arr.shape[0]):
         for j in range(arr.shape[1]):
-            for k in range(arr.shape[2]):  # Loop through each color channel
-                output[i, j, k] = np.min(padded_arr[i:i+kernel_size, j:j+kernel_size, k])
+            region = padded_arr[i:i + kernel_size, j:j + kernel_size]
+            output[i, j] = np.min(region)
 
     return output
 
-def max_filter(arr, kernel_size=3):
+# def max_filter(arr, kernel_size=2):
+#     output = np.zeros_like(arr, dtype=np.uint8)
+#     padded_arr = np.pad(arr, ((kernel_size // 2, kernel_size // 2), (kernel_size // 2, kernel_size // 2), (0, 0)), mode='edge')
+
+#     for i in range(arr.shape[0]):
+#         for j in range(arr.shape[1]):
+#             for k in range(arr.shape[2]):  # Loop through each color channel
+#                 output[i, j, k] = np.max(padded_arr[i:i+kernel_size, j:j+kernel_size, k])
+
+#     return output
+
+def max_filter(arr, kernel_size=2):
+    if arr.ndim == 2:  # Grayscale image
+        return _apply_max_filter(arr, kernel_size)
+    elif arr.ndim == 3:  # Color image
+        # Apply the filter on each color channel independently
+        filtered_channels = [_apply_max_filter(arr[:, :, ch], kernel_size) for ch in range(arr.shape[2])]
+        return np.stack(filtered_channels, axis=-1)
+    else:
+        raise ValueError("Unsupported image format for max filter")
+
+def _apply_max_filter(arr, kernel_size):
     output = np.zeros_like(arr, dtype=np.uint8)
-    padded_arr = np.pad(arr, ((kernel_size // 2, kernel_size // 2), (kernel_size // 2, kernel_size // 2), (0, 0)), mode='edge')
+    padded_arr = np.pad(arr, kernel_size // 2, mode='edge')
 
     for i in range(arr.shape[0]):
         for j in range(arr.shape[1]):
-            for k in range(arr.shape[2]):  # Loop through each color channel
-                output[i, j, k] = np.max(padded_arr[i:i+kernel_size, j:j+kernel_size, k])
+            region = padded_arr[i:i + kernel_size, j:j + kernel_size]
+            output[i, j] = np.max(region)
 
     return output
 
-def adaptive_median_filter(arr, max_kernel_size=7):
+def adaptive_median_filter(arr, max_kernel_size=3):
     if arr.ndim == 2:  # Grayscale image
         return _apply_adaptive_median(arr, max_kernel_size)
     elif arr.ndim == 3:  # Color image
