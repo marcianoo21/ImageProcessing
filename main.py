@@ -4,7 +4,7 @@ import sys
 
 from image_functions import (doBrightness, doContrast, doNegative, 
                              doDefault, doVerticalFlip, doHorizontalFlip, 
-                             doDiagonalFlip, doShrink, doEnlarge, min_filter, max_filter, adaptive_median_filter)
+                             doDiagonalFlip, doShrink, doEnlarge, min_filter, max_filter, adaptive_median_filter, mse, pmse, snr, psnr, max_diff)
 
 def print_help():
     help_text = """
@@ -60,9 +60,9 @@ def print_help():
     """
     print(help_text)
 
-im = Image.open("./images/lena_8bits.bmp")
+im = Image.open("./images/lenac.bmp")
 
-im = Image.open("lenac.bmp")
+# im_noised = Image.open("./images/lena_impulse3.bmp")
 im_noised = Image.open("result.bmp")
 
 im_noised_resized = im_noised.resize(im.size)

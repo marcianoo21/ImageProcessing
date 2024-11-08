@@ -19,7 +19,7 @@ def doBrightness(param, arr):
     arr[arr < 0] = 0    
     return arr.astype(np.uint8) 
 
-def doContrast(param, arr): #dodac 'b' w y=ax+b 
+def doContrast(param, arr): 
     try:
         param = float(param)
     except ValueError:
@@ -33,7 +33,7 @@ def doContrast(param, arr): #dodac 'b' w y=ax+b
     print("Function doContrast invoked with param: " + str(param))
     
     # Adjust contrast
-    arr = arr * param
+    arr = (arr - 128) * param + 128
     arr = arr.astype(np.int16)  # Prevent overflow
     arr[arr > 255] = 255  
     arr[arr < 0] = 0  
