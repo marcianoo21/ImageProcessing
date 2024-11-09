@@ -19,14 +19,14 @@ def doBrightness(param, arr):
     arr[arr < 0] = 0    
     return arr.astype(np.uint8) 
 
-def doContrast(param, arr): 
+def doContrast(param, arr):
     try:
         param = float(param)
     except ValueError:
         print(f"Error: Invalid contrast parameter '{param}'. It should be a number.")
         return None
 
-    if not (0 <= param <= 5): 
+    if not (0 <= param <= 5):
         print(f"Error: Invalid contrast parameter '{param}'. It should be in the range [0, 5].")
         return None
 
@@ -35,8 +35,7 @@ def doContrast(param, arr):
     # Adjust contrast
     arr = (arr - 128) * param + 128
     arr = arr.astype(np.int16)  # Prevent overflow
-    arr[arr > 255] = 255  
-    arr[arr < 0] = 0  
+    arr = np.clip(arr, 0, 255)  # Clip the values between 0 and 255
     return arr.astype(np.uint8)
 
 def doNegative(arr):
@@ -48,7 +47,7 @@ def doNegative(arr):
 
 def doDefault(arr):
     print("Default action")
-    im = Image.open("lenac.bmp")
+    im = Image.open("./images/lenac.bmp")
     arr = np.array(im)
     return arr
 
