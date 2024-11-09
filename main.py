@@ -62,32 +62,23 @@ def print_help():
 
 im = Image.open("./images/lenac.bmp")
 
-# im_noised = Image.open("./images/lena_impulse3.bmp")
+# im_noised = Image.open("./images/lenac_uniform3.bmp")
 im_noised = Image.open("result.bmp")
 
 im_noised_resized = im_noised.resize(im.size)
 
-arr = np.array(im)
+arr1 = np.array(im)
 arr_noised = np.array(im_noised_resized)
 
-if arr.ndim == 2:  # Czarno-biały obraz
+if arr1.ndim == 2:  # Czarno-biały obraz
     numColorChannels = 1
-    arr = arr.reshape(im.size[1], im.size[0])
-elif arr.ndim == 3:  # Kolorowy obraz
-    numColorChannels = arr.shape[2]
-    arr = arr.reshape(im.size[1], im.size[0], numColorChannels)
+    arr = arr1.reshape(im.size[1], im.size[0])
+elif arr1.ndim == 3:  # Kolorowy obraz
+    numColorChannels = arr1.shape[2]
+    arr = arr1.reshape(im.size[1], im.size[0], numColorChannels)
 else:
     raise ValueError("Nieobsługiwany format obrazu")
 
-# Sprawdź, czy obraz z szumem jest czarno-biały czy kolorowy
-if arr_noised.ndim == 2:  # Czarno-biały obraz
-    numColorChannels = 1
-    arr_noised = arr_noised.reshape(im.size[1], im.size[0])
-elif arr_noised.ndim == 3:  # Kolorowy obraz
-    numColorChannels = arr_noised.shape[2]
-    arr_noised = arr_noised.reshape(im.size[1], im.size[0], numColorChannels)
-else:
-    raise ValueError("Nieobsługiwany format obrazu z szumem")
 
 if len(sys.argv) == 1:
     print("No command line parameters given.\n")
@@ -101,29 +92,29 @@ if len(sys.argv) == 2:
             print_help()
             sys.exit()
         case '--negative':
-            arr = doNegative(arr)
+            arr = doNegative(arr1)
         case '--default':
-            arr = doDefault(arr)
+            arr = doDefault(arr1)
         case '--vflip':
-            arr = doVerticalFlip(arr)
+            arr = doVerticalFlip(arr1)
         case '--hflip':
-            arr = doHorizontalFlip(arr)
+            arr = doHorizontalFlip(arr1)
         case '--dflip':
-            arr = doDiagonalFlip(arr)
+            arr = doDiagonalFlip(arr1)
         case '--mse':
-            mse_value = mse(arr, arr_noised)
+            mse_value = mse(arr1, arr_noised)
             print("Mean Squared Error: " + str(mse_value))
         case '--pmse':
-            pmse_value = pmse(arr, arr_noised)
+            pmse_value = pmse(arr1, arr_noised)
             print("Peak mean square error: " + str(pmse_value))
         case '--snr':
-            snr_value = snr(arr, arr_noised)
+            snr_value = snr(arr1, arr_noised)
             print("Signal to noise ratio: " + str(snr_value))
         case '--psnr':
-            psnr_value = psnr(arr, arr_noised)
+            psnr_value = psnr(arr1, arr_noised)
             print("Peak signal to noise ratio: " + str(psnr_value))
         case '--md':
-            md_value = max_diff(arr, arr_noised)
+            md_value = max_diff(arr1, arr_noised)
             print("Max difference: " + str(md_value))
         case '--min':
             arr = min_filter(arr_noised)
