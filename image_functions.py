@@ -30,14 +30,13 @@ def doContrast(param, arr):
         print(f"Error: Invalid contrast parameter '{param}'. It should be in the range [0, 5].")
         return None
 
-    print("Function doContrast invoked with param:", param)
+    print("Function doContrast invoked with param: " + str(param))
     
-    arr = arr.astype(np.int16)  
-    adjusted_arr = (arr - 128) * param + 128
-    adjusted_arr = np.clip(adjusted_arr, 0, 255)
-
-    return adjusted_arr.astype(np.uint8)
-
+    # Adjust contrast
+    arr = arr.astype(np.int16)  # Prevent overflow
+    arr = (arr - 128) * param + 128
+    arr = np.clip(arr, 0, 255)  # Clip the values between 0 and 255
+    return arr.astype(np.uint8)
 
 def doNegative(arr):
     print("Negative action")
