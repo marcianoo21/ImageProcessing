@@ -33,8 +33,8 @@ def doContrast(param, arr):
     print("Function doContrast invoked with param: " + str(param))
     
     # Adjust contrast
-    arr = (arr - 128) * param + 128
     arr = arr.astype(np.int16)  # Prevent overflow
+    arr = (arr - 128) * param + 128
     arr = np.clip(arr, 0, 255)  # Clip the values between 0 and 255
     return arr.astype(np.uint8)
 
