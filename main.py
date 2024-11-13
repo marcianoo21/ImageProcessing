@@ -62,8 +62,13 @@ def print_help():
 
 im = Image.open("./images/lenac.bmp")
 
-# im_noised = Image.open("./images/lenac_uniform3.bmp")
-im_noised = Image.open("result.bmp")
+# im_noised = Image.open("./images/lena_impulse3.bmp")
+im_noised = Image.open("./images/lenac_max.bmp")
+# im_noised = Image.open("./images/lenac_min.bmp")
+
+# im_noised = Image.open("./images/lenac_impulse3.bmp")
+# im_noised = Image.open("./images/lenac_no_noises.bmp")
+# im_noised = Image.open("result.bmp")
 
 im_noised_resized = im_noised.resize(im.size)
 
