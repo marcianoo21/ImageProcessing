@@ -147,7 +147,6 @@ else:
     print("Unknown command: " + command)
     sys.exit()
 
-# Save the resulting image only if an image transformation was applied
 if command not in ['--mse', '--pmse', '--snr', '--psnr', '--md']:
     newIm = Image.fromarray(arr.astype(np.uint8))
     newIm.save("result.bmp")
