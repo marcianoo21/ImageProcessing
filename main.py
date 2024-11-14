@@ -60,94 +60,95 @@ def print_help():
     """
     print(help_text)
 
-im = Image.open("./images/lenac.bmp")
 
-# im_noised = Image.open("./images/lena_impulse3.bmp")
-im_noised = Image.open("./images/lenac_max.bmp")
-# im_noised = Image.open("./images/lenac_min.bmp")
-
-# im_noised = Image.open("./images/lenac_impulse3.bmp")
-# im_noised = Image.open("./images/lenac_no_noises.bmp")
-# im_noised = Image.open("result.bmp")
-
-im_noised_resized = im_noised.resize(im.size)
-
-arr1 = np.array(im)
-arr_noised = np.array(im_noised_resized)
-
-if arr1.ndim == 2:  # Czarno-biały obraz
-    numColorChannels = 1
-    arr = arr1.reshape(im.size[1], im.size[0])
-elif arr1.ndim == 3:  # Kolorowy obraz
-    numColorChannels = arr1.shape[2]
-    arr = arr1.reshape(im.size[1], im.size[0], numColorChannels)
-else:
-    raise ValueError("Nieobsługiwany format obrazu")
-
-
-if len(sys.argv) == 1:
-    print("No command line parameters given.\n")
+if len(sys.argv) < 2:
+    print("No command line parameters given.")
+    print_help()
     sys.exit()
 
-command = sys.argv[1]
+image_path = sys.argv[1]
+command = sys.argv[2]
 
-if len(sys.argv) == 2:
-    match command:
-        case '--help':
-            print_help()
-            sys.exit()
-        case '--negative':
-            arr = doNegative(arr1)
-        case '--default':
-            arr = doDefault(arr1)
-        case '--vflip':
-            arr = doVerticalFlip(arr1)
-        case '--hflip':
-            arr = doHorizontalFlip(arr1)
-        case '--dflip':
-            arr = doDiagonalFlip(arr1)
-        case '--mse':
-            mse_value = mse(arr1, arr_noised)
-            print("Mean Squared Error: " + str(mse_value))
-        case '--pmse':
-            pmse_value = pmse(arr1, arr_noised)
-            print("Peak mean square error: " + str(pmse_value))
-        case '--snr':
-            snr_value = snr(arr1, arr_noised)
-            print("Signal to noise ratio: " + str(snr_value))
-        case '--psnr':
-            psnr_value = psnr(arr1, arr_noised)
-            print("Peak signal to noise ratio: " + str(psnr_value))
-        case '--md':
-            md_value = max_diff(arr1, arr_noised)
-            print("Max difference: " + str(md_value))
-        case '--min':
-            arr = min_filter(arr_noised)
-            print("Min filter applied.")
-        case '--max':
-            arr = max_filter(arr_noised)
-            print("Max filter applied.")
-        case '--adaptive':
-            arr = adaptive_median_filter(arr_noised)
-            print("Adaptive median filter applied.")
-        case _:
-            print("Unknown command: " + command)
-            sys.exit()
+# Open the main image
+try:
+    im = Image.open(image_path)
+except Exception as e:
+    print(f"Failed to open image: {image_path}. Error: {e}")
+    sys.exit()
 
-else:
-    param = sys.argv[2]
-    if command == '--brightness':
-        arr = doBrightness(param, arr)
-    elif command == '--contrast':
-        arr = doContrast(param, arr)
-    elif command == '--shrink':
-        arr = doShrink(param, arr)
-    elif command == '--enlarge':
-        arr = doEnlarge(param, arr)
+arr1 = np.array(im)
+
+# Check if additional parameter (value or second image) is provided
+if len(sys.argv) == 4:
+    param = sys.argv[3]
+    if command in ['--mse', '--pmse', '--snr', '--psnr', '--md']:
+        try:
+            im_noised = Image.open(param)
+            im_noised_resized = im_noised.resize(im.size)
+            arr_noised = np.array(im_noised_resized)
+        except Exception as e:
+            print(f"Failed to open comparison image: {param}. Error: {e}")
+            sys.exit()
     else:
-        print("Unknown command: " + command)
-        sys.exit()
+        # Convert param to numerical type for commands that need it
+        try:
+            param = float(param) if '.' in param else int(param)
+        except ValueError:
+            print(f"Invalid parameter value: {param}. Expected a number.")
+            sys.exit()
 
+# Image processing based on command
+if command == '--help':
+    print_help()
+    sys.exit()
+elif command == '--negative':
+    arr = doNegative(arr1)
+elif command == '--default':
+    arr = doDefault(arr1)
+elif command == '--vflip':
+    arr = doVerticalFlip(arr1)
+elif command == '--hflip':
+    arr = doHorizontalFlip(arr1)
+elif command == '--dflip':
+    arr = doDiagonalFlip(arr1)
+elif command == '--min':
+    arr = min_filter(arr1)
+    print("Min filter applied.")
+elif command == '--max':
+    arr = max_filter(arr1)
+    print("Max filter applied.")
+elif command == '--adaptive':
+    arr = adaptive_median_filter(arr1)
+    print("Adaptive median filter applied.")
+elif command == '--brightness':
+    arr = doBrightness(param, arr1)
+elif command == '--contrast':
+    arr = doContrast(param, arr1)
+elif command == '--shrink':
+    arr = doShrink(param, arr1)
+elif command == '--enlarge':
+    arr = doEnlarge(param, arr1)
+elif command == '--mse':
+    mse_value = mse(arr1, arr_noised)
+    print("Mean Squared Error: " + str(mse_value))
+elif command == '--pmse':
+    pmse_value = pmse(arr1, arr_noised)
+    print("Peak mean square error: " + str(pmse_value))
+elif command == '--snr':
+    snr_value = snr(arr1, arr_noised)
+    print("Signal to noise ratio: " + str(snr_value))
+elif command == '--psnr':
+    psnr_value = psnr(arr1, arr_noised)
+    print("Peak signal to noise ratio: " + str(psnr_value))
+elif command == '--md':
+    md_value = max_diff(arr1, arr_noised)
+    print("Max difference: " + str(md_value))
+else:
+    print("Unknown command: " + command)
+    sys.exit()
 
-newIm = Image.fromarray(arr.astype(np.uint8))
-newIm.save("result.bmp")
+# Save the resulting image only if an image transformation was applied
+if command not in ['--mse', '--pmse', '--snr', '--psnr', '--md']:
+    newIm = Image.fromarray(arr.astype(np.uint8))
+    newIm.save("result.bmp")
+    print("Output saved as 'result.bmp'")
