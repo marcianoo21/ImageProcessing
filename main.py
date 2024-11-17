@@ -4,7 +4,8 @@ import sys
 
 from image_functions import (doBrightness, doContrast, doNegative, 
                              doDefault, doVerticalFlip, doHorizontalFlip, 
-                             doDiagonalFlip, doShrink, doEnlarge, min_filter, max_filter, adaptive_median_filter, mse, pmse, snr, psnr, max_diff)
+                             doDiagonalFlip, doShrink, doEnlarge, min_filter, max_filter, adaptive_median_filter, mse, pmse, snr, psnr, max_diff, laplacian_filter, 
+                             mean, variance, std_dev, variation_coeff_1, asymmetry_coeff, flattening_coeff, variation_coeff_2, entropy)
 
 def print_help():
     help_text = """
@@ -57,8 +58,124 @@ def print_help():
     
     --md                  : Calculate the maximum difference between the original and noised image.
                             Example: --md
+    
+    --laplacian           : Apply Laplacian filter to the image.
+                            Example: --laplacian
+    
+    --cmean               : Compute and display the mean of the image.
+                            Example: --cmean
+    
+    --cvariance           : Compute and display the variance of the image.
+                            Example: --cvariance
+    
+    --cstdev              : Compute and display the standard deviation of the image.
+                            Example: --cstdev
+    
+    --cvarcoi             : Compute and display the variation coefficient I of the image.
+                            Example: --cvarcoi
+    
+    --casyco              : Compute and display the asymmetry coefficient of the image.
+                            Example: --casyco
+    
+    --cflattening         : Compute and display the flattening coefficient of the image.
+                            Example: --cflattening
+    
+    --cvarcoii            : Compute and display the variation coefficient II of the image.
+                            Example: --cvarcoii
+    
+    --centropy            : Compute and display the entropy of the image.
+                            Example: --centropy
     """
     print(help_text)
+
+def apply_command(command, param, arr, arr_noised):
+    if command == '--help':
+        print_help()
+        sys.exit()
+    elif command == '--negative':
+        return doNegative(arr)
+    elif command == '--default':
+        return doDefault(arr)
+    elif command == '--vflip':
+        return doVerticalFlip(arr)
+    elif command == '--hflip':
+        return doHorizontalFlip(arr)
+    elif command == '--dflip':
+        return doDiagonalFlip(arr)
+    elif command == '--mse':
+        mse_value = mse(arr, arr_noised)
+        print("Mean Squared Error: " + str(mse_value))
+    elif command == '--pmse':
+        pmse_value = pmse(arr, arr_noised)
+        print("Peak mean square error: " + str(pmse_value))
+    elif command == '--snr':
+        snr_value = snr(arr, arr_noised)
+        print("Signal to noise ratio: " + str(snr_value))
+    elif command == '--psnr':
+        psnr_value = psnr(arr, arr_noised)
+        print("Peak signal to noise ratio: " + str(psnr_value))
+    elif command == '--md':
+        md_value = max_diff(arr, arr_noised)
+        print("Max difference: " + str(md_value))
+    elif command == '--brightness':
+        return doBrightness(arr, int(param))
+    elif command == '--contrast':
+        return doContrast(arr, float(param))
+    elif command == '--shrink':
+        return doShrink(arr, int(param))
+    elif command == '--enlarge':
+        return doEnlarge(arr, int(param))
+    elif command == '--adaptive':
+        return adaptive_median_filter(arr, int(param))
+    elif command == '--min':
+        return min_filter(arr, int(param))
+    elif command == '--max':
+        return max_filter(arr, int(param))
+    elif command == '--laplacian':
+        return laplacian_filter(arr)
+    elif command in ['--cmean', '--cvariance', '--cstdev', '--cvarcoi', '--casyco', '--cflattening', '--cvarcoii', '--centropy']:
+        histogram, _ = np.histogram(arr, bins=256, range=(0, 256))
+        total_pixels = arr.size
+        if command == '--cmean':
+            mean_value = mean(histogram, total_pixels)
+            print("Mean:", mean_value)
+        elif command == '--cvariance':
+            mean_value = mean(histogram, total_pixels)
+            variance_value = variance(histogram, total_pixels, mean_value)
+            print("Variance:", variance_value)
+        elif command == '--cstdev':
+            mean_value = mean(histogram, total_pixels)
+            variance_value = variance(histogram, total_pixels, mean_value)
+            std_dev_value = std_dev(variance_value)
+            print("Standard Deviation:", std_dev_value)
+        elif command == '--cvarcoi':
+            mean_value = mean(histogram, total_pixels)
+            variance_value = variance(histogram, total_pixels, mean_value)
+            std_dev_value = std_dev(variance_value)
+            variation_coeff_1_value = variation_coeff_1(std_dev_value, mean_value)
+            print("Variation Coefficient I:", variation_coeff_1_value)
+        elif command == '--casyco':
+            mean_value = mean(histogram, total_pixels)
+            variance_value = variance(histogram, total_pixels, mean_value)
+            std_dev_value = std_dev(variance_value)
+            asymmetry_coeff_value = asymmetry_coeff(histogram, total_pixels, mean_value, std_dev_value)
+            print("Asymmetry Coefficient:", asymmetry_coeff_value)
+        elif command == '--cflattening':
+            mean_value = mean(histogram, total_pixels)
+            variance_value = variance(histogram, total_pixels, mean_value)
+            std_dev_value = std_dev(variance_value)
+            flattening_coeff_value = flattening_coeff(histogram, total_pixels, mean_value, std_dev_value)
+            print("Flattening Coefficient:", flattening_coeff_value)
+        elif command == '--cvarcoii':
+            variation_coeff_2_value = variation_coeff_2(histogram, total_pixels)
+            print("Variation Coefficient II:", variation_coeff_2_value)
+        elif command == '--centropy':
+            entropy_value = entropy(histogram, total_pixels)
+            print("Entropy:", entropy_value)
+    else:
+        print("Unknown command: " + command)
+        sys.exit()
+    return arr
 
 
 if len(sys.argv) < 2:
@@ -96,58 +213,13 @@ if len(sys.argv) == 4:
         except ValueError:
             print(f"Invalid parameter value: {param}. Expected a number.")
             sys.exit()
-
-# Image processing based on command
-if command == '--help':
-    print_help()
-    sys.exit()
-elif command == '--negative':
-    arr = doNegative(arr1)
-elif command == '--default':
-    arr = doDefault(arr1)
-elif command == '--vflip':
-    arr = doVerticalFlip(arr1)
-elif command == '--hflip':
-    arr = doHorizontalFlip(arr1)
-elif command == '--dflip':
-    arr = doDiagonalFlip(arr1)
-elif command == '--min':
-    arr = min_filter(arr1)
-    print("Min filter applied.")
-elif command == '--max':
-    arr = max_filter(arr1)
-    print("Max filter applied.")
-elif command == '--adaptive':
-    arr = adaptive_median_filter(arr1)
-    print("Adaptive median filter applied.")
-elif command == '--brightness':
-    arr = doBrightness(param, arr1)
-elif command == '--contrast':
-    arr = doContrast(param, arr1)
-elif command == '--shrink':
-    arr = doShrink(param, arr1)
-elif command == '--enlarge':
-    arr = doEnlarge(param, arr1)
-elif command == '--mse':
-    mse_value = mse(arr1, arr_noised)
-    print("Mean Squared Error: " + str(mse_value))
-elif command == '--pmse':
-    pmse_value = pmse(arr1, arr_noised)
-    print("Peak mean square error: " + str(pmse_value))
-elif command == '--snr':
-    snr_value = snr(arr1, arr_noised)
-    print("Signal to noise ratio: " + str(snr_value))
-elif command == '--psnr':
-    psnr_value = psnr(arr1, arr_noised)
-    print("Peak signal to noise ratio: " + str(psnr_value))
-elif command == '--md':
-    md_value = max_diff(arr1, arr_noised)
-    print("Max difference: " + str(md_value))
 else:
-    print("Unknown command: " + command)
-    sys.exit()
+    param = None
+    arr_noised = None
 
-if command not in ['--mse', '--pmse', '--snr', '--psnr', '--md']:
+arr = apply_command(command, param, arr1, arr_noised)
+
+if command not in ['--mse', '--pmse', '--snr', '--psnr', '--md', '--cmean', '--cvariance', '--cstdev', '--cvarcoi', '--casyco', '--cflattening', '--cvarcoii', '--centropy']:
     newIm = Image.fromarray(arr.astype(np.uint8))
     newIm.save("result.bmp")
     print("Output saved as 'result.bmp'")
