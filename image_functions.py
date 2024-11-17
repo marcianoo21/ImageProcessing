@@ -459,18 +459,44 @@ def max_diff(arr1, arr2):
                     pivot = diff
     return pivot
 
-
-def laplacian_filter(arr):
-    kernel = np.array([[0,  1, 0],
-                       [1, -4, 1],
-                       [0,  1, 0]])
-    if arr.ndim == 2:
+def universal_laplacian_filter(arr, kernel):
+    if arr.ndim == 2:  # Grayscale image
         filtered_image = convolve(arr, kernel, mode='reflect')
         return np.clip(filtered_image, 0, 255).astype(np.uint8)
-    elif arr.ndim == 3:
+    elif arr.ndim == 3:  # Color image
         filtered_channels = [convolve(arr[:, :, ch], kernel, mode='reflect') for ch in range(arr.shape[2])]
         filtered_image = np.stack(filtered_channels, axis=-1)
         return np.clip(filtered_image, 0, 255).astype(np.uint8)
+    
+def optimized_laplacian_filter(arr):
+    laplacian_kernel = np.array([[1, -2, 1],
+                                 [-2, 4, -2],
+                                 [1, -2, 1]])
+    
+    if arr.ndim == 2:  # Grayscale image
+        filtered_image = convolve(arr, laplacian_kernel, mode='reflect')
+        return np.clip(filtered_image, 0, 255).astype(np.uint8)
+    elif arr.ndim == 3:  # Color image
+        h, w, c = arr.shape
+        filtered_image = np.empty((h, w, c), dtype=np.float32)
+        
+        for ch in range(c):
+            filtered_image[:, :, ch] = convolve(arr[:, :, ch], laplacian_kernel, mode='reflect')
+        
+        return np.clip(filtered_image, 0, 255).astype(np.uint8)
+
+
+# def laplacian_filter(arr):
+#     kernel = np.array([[1, -2, 1],
+#                        [-2, 4, -2],
+#                        [1, -2, 1]])
+#     if arr.ndim == 2:
+#         filtered_image = convolve(arr, kernel, mode='reflect')
+#         return np.clip(filtered_image, 0, 255).astype(np.uint8)
+#     elif arr.ndim == 3:
+#         filtered_channels = [convolve(arr[:, :, ch], kernel, mode='reflect') for ch in range(arr.shape[2])]
+#         filtered_image = np.stack(filtered_channels, axis=-1)
+#         return np.clip(filtered_image, 0, 255).astype(np.uint8)
 
 def mean(histogram, total_pixels):
     return np.sum(histogram * np.arange(len(histogram))) / total_pixels
