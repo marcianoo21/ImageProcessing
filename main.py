@@ -147,14 +147,7 @@ def apply_command(command, param, arr, arr_noised):
     elif command == '--histogram':
         return create_histogram(arr)
     elif command == '--hexponent':
-        if len(sys.argv) < 5:
-            print("Error: --hexponent requires two parameters (start and end values).")
-            sys.exit()
-        
-        start = int(sys.argv[3])  
-        end = int(sys.argv[4])   
-        
-        return exponential_density_function(arr, start, end)
+        return exponential_density_function(arr, int(sys.argv[3]) , int(sys.argv[4]) )
     elif command in ['--cmean', '--cvariance', '--cstdev', '--cvarcoi', '--casyco', '--cflattening', '--cvarcoii', '--centropy']:
         histogram, _ = np.histogram(arr, bins=256, range=(0, 256))
         total_pixels = arr.size

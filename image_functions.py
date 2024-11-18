@@ -343,7 +343,7 @@ def create_histogram(arr, output_dir="histograms"):
 
     return arr
 
-def exponential_density_function(image, g_min, g_max):
+def exponential_density_function(image, g_min = 0, g_max = 255):
     if len(image.shape) == 3:
         raise ValueError("Exponential density function is implemented for grayscale images only.")
 
