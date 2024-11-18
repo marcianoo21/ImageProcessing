@@ -5,7 +5,7 @@ import sys
 from image_functions import (doBrightness, doContrast, doNegative, 
                              doDefault, doVerticalFlip, doHorizontalFlip, 
                              doDiagonalFlip, doShrink, doEnlarge, min_filter, max_filter, adaptive_median_filter, mse, pmse, snr, psnr, max_diff,
-                             mean, variance, std_dev, variation_coeff_1, asymmetry_coeff, flattening_coeff, variation_coeff_2, entropy, optimized_laplacian_filter, universal_laplacian_filter, roberts_operator_ii, create_histogram)
+                             mean, variance, std_dev, variation_coeff_1, asymmetry_coeff, flattening_coeff, variation_coeff_2, entropy, optimized_laplacian_filter, universal_laplacian_filter, roberts_operator_ii, create_histogram, exponential_density_function)
 
 def print_help():
     help_text = """
@@ -146,6 +146,15 @@ def apply_command(command, param, arr, arr_noised):
         return roberts_operator_ii(arr)
     elif command == '--histogram':
         return create_histogram(arr)
+    elif command == '--hexponent':
+        if len(sys.argv) < 5:
+            print("Error: --hexponent requires two parameters (start and end values).")
+            sys.exit()
+        
+        start = int(sys.argv[3])  
+        end = int(sys.argv[4])   
+        
+        return exponential_density_function(arr, start, end)
     elif command in ['--cmean', '--cvariance', '--cstdev', '--cvarcoi', '--casyco', '--cflattening', '--cvarcoii', '--centropy']:
         histogram, _ = np.histogram(arr, bins=256, range=(0, 256))
         total_pixels = arr.size

@@ -190,47 +190,47 @@ def max_diff(arr1, arr2):
                     pivot = diff
     return pivot
 
-# def universal_laplacian_filter(arr, kernel):
-#     if arr.ndim == 2:  # Grayscale image
-#         filtered_image = convolve(arr, kernel, mode='reflect')
-#         return np.clip(filtered_image, 0, 255).astype(np.uint8)
-#     elif arr.ndim == 3:  # Color image
-#         filtered_channels = [convolve(arr[:, :, ch], kernel, mode='reflect') for ch in range(arr.shape[2])]
-#         filtered_image = np.stack(filtered_channels, axis=-1)
-#         return np.clip(filtered_image, 0, 255).astype(np.uint8)
+def universal_laplacian_filter(arr, kernel):
+    if arr.ndim == 2:  # Grayscale image
+        filtered_image = convolve(arr, kernel, mode='reflect')
+        return np.clip(filtered_image, 0, 255).astype(np.uint8)
+    elif arr.ndim == 3:  # Color image
+        filtered_channels = [convolve(arr[:, :, ch], kernel, mode='reflect') for ch in range(arr.shape[2])]
+        filtered_image = np.stack(filtered_channels, axis=-1)
+        return np.clip(filtered_image, 0, 255).astype(np.uint8)
     
-def universal_laplacian_filter(image, mask):
-    def normalize(channel):
-        min_val = np.min(channel)
-        max_val = np.max(channel)
-        if max_val - min_val == 0:
-            return np.zeros_like(channel, dtype=np.uint8)
-        normalized_channel = 255 * (channel - min_val) / (max_val - min_val)
-        return normalized_channel.astype(np.uint8)
+# def universal_laplacian_filter(image, mask):
+#     def normalize(channel):
+#         min_val = np.min(channel)
+#         max_val = np.max(channel)
+#         if max_val - min_val == 0:
+#             return np.zeros_like(channel, dtype=np.uint8)
+#         normalized_channel = 255 * (channel - min_val) / (max_val - min_val)
+#         return normalized_channel.astype(np.uint8)
 
-    def apply_filter_to_channel(channel, mask):
-        k = mask.shape[0] // 2  
+#     def apply_filter_to_channel(channel, mask):
+#         k = mask.shape[0] // 2  
         
-        padded_channel = cv2.copyMakeBorder(channel, k, k, k, k, cv2.BORDER_REPLICATE)
+#         padded_channel = cv2.copyMakeBorder(channel, k, k, k, k, cv2.BORDER_REPLICATE)
         
-        filtered_channel = np.zeros_like(channel, dtype=np.float32)
+#         filtered_channel = np.zeros_like(channel, dtype=np.float32)
         
-        for i in range(channel.shape[0]):
-            for j in range(channel.shape[1]):
-                roi = padded_channel[i:i + mask.shape[0], j:j + mask.shape[1]]
-                filtered_channel[i, j] = np.sum(roi * mask)
+#         for i in range(channel.shape[0]):
+#             for j in range(channel.shape[1]):
+#                 roi = padded_channel[i:i + mask.shape[0], j:j + mask.shape[1]]
+#                 filtered_channel[i, j] = np.sum(roi * mask)
         
-        return normalize(filtered_channel)
+#         return normalize(filtered_channel)
 
-    if len(image.shape) == 3:  
-        channels = cv2.split(image)
-        filtered_channels = []
-        for channel in channels:
-            filtered_channel = apply_filter_to_channel(channel, mask)
-            filtered_channels.append(filtered_channel)
-        return cv2.merge(filtered_channels)
-    else:  
-        return apply_filter_to_channel(image, mask)
+#     if len(image.shape) == 3:  
+#         channels = cv2.split(image)
+#         filtered_channels = []
+#         for channel in channels:
+#             filtered_channel = apply_filter_to_channel(channel, mask)
+#             filtered_channels.append(filtered_channel)
+#         return cv2.merge(filtered_channels)
+#     else:  
+#         return apply_filter_to_channel(image, mask)
 
 
 def optimized_laplacian_filter(arr):
@@ -342,3 +342,20 @@ def create_histogram(arr, output_dir="histograms"):
         raise ValueError("Unsupported image format or corrupted image.")
 
     return arr
+
+def exponential_density_function(image, g_min, g_max):
+    if len(image.shape) == 3:
+        raise ValueError("Exponential density function is implemented for grayscale images only.")
+
+    N = image.size
+    histogram, _ = np.histogram(image, bins=256, range=[0, 256])
+    cdf = np.cumsum(histogram) / N  
+    alpha = (g_max - g_min) / np.log(1 + cdf.max())  
+
+    transform = lambda f: g_min - alpha * np.log(1 - cdf[f])
+    new_image = np.zeros_like(image, dtype=np.float32)
+    for f in range(256):
+        new_image[image == f] = transform(f)
+
+    new_image = np.clip(new_image, g_min, g_max)
+    return new_image.astype(np.uint8)
