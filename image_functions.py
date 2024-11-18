@@ -350,7 +350,7 @@ def exponential_density_function(image, g_min = 0, g_max = 255):
     N = image.size
     histogram, _ = np.histogram(image, bins=256, range=[0, 256])
     cdf = np.cumsum(histogram) / N  
-    alpha = (g_max - g_min) / np.log(1 + cdf.max())  
+    alpha = 30
 
     transform = lambda f: g_min - alpha * np.log(1 - cdf[f])
     new_image = np.zeros_like(image, dtype=np.float32)
