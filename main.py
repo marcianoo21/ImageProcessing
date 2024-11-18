@@ -5,7 +5,7 @@ import sys
 from image_functions import (doBrightness, doContrast, doNegative, 
                              doDefault, doVerticalFlip, doHorizontalFlip, 
                              doDiagonalFlip, doShrink, doEnlarge, min_filter, max_filter, adaptive_median_filter, mse, pmse, snr, psnr, max_diff,
-                             mean, variance, std_dev, variation_coeff_1, asymmetry_coeff, flattening_coeff, variation_coeff_2, entropy, optimized_laplacian_filter, universal_laplacian_filter) # laplacian_filter
+                             mean, variance, std_dev, variation_coeff_1, asymmetry_coeff, flattening_coeff, variation_coeff_2, entropy, optimized_laplacian_filter, universal_laplacian_filter, roberts_operator_ii, create_histogram)
 
 def print_help():
     help_text = """
@@ -142,6 +142,10 @@ def apply_command(command, param, arr, arr_noised):
         return universal_laplacian_filter(arr, kernel)
     elif command == '--olaplace':
         return optimized_laplacian_filter(arr)
+    elif command == '--orobertsii':
+        return roberts_operator_ii(arr)
+    elif command == '--histogram':
+        return create_histogram(arr)
     elif command in ['--cmean', '--cvariance', '--cstdev', '--cvarcoi', '--casyco', '--cflattening', '--cvarcoii', '--centropy']:
         histogram, _ = np.histogram(arr, bins=256, range=(0, 256))
         total_pixels = arr.size
