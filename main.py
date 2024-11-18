@@ -4,8 +4,8 @@ import sys
 
 from image_functions import (doBrightness, doContrast, doNegative, 
                              doDefault, doVerticalFlip, doHorizontalFlip, 
-                             doDiagonalFlip, doShrink, doEnlarge, min_filter, max_filter, adaptive_median_filter, mse, pmse, snr, psnr, max_diff, laplacian_filter, 
-                             mean, variance, std_dev, variation_coeff_1, asymmetry_coeff, flattening_coeff, variation_coeff_2, entropy)
+                             doDiagonalFlip, doShrink, doEnlarge, min_filter, max_filter, adaptive_median_filter, mse, pmse, snr, psnr, max_diff,
+                             mean, variance, std_dev, variation_coeff_1, asymmetry_coeff, flattening_coeff, variation_coeff_2, entropy, optimized_laplacian_filter, universal_laplacian_filter) # laplacian_filter
 
 def print_help():
     help_text = """
@@ -59,8 +59,11 @@ def print_help():
     --md                  : Calculate the maximum difference between the original and noised image.
                             Example: --md
     
-    --laplacian           : Apply Laplacian filter to the image.
-                            Example: --laplacian
+    --slaplace            : Apply Laplacian filter to the image.
+                            Example: --slaplace
+
+    --olaplace             : Apply Laplacian optimized filter to the image.
+                             Example: --olaplace
     
     --cmean               : Compute and display the mean of the image.
                             Example: --cmean
@@ -89,6 +92,10 @@ def print_help():
     print(help_text)
 
 def apply_command(command, param, arr, arr_noised):
+    kernel = np.array(
+    [[0, -1, 0],
+    [-1, 4, -1],
+    [0, -1, 0]])
     if command == '--help':
         print_help()
         sys.exit()
@@ -131,8 +138,10 @@ def apply_command(command, param, arr, arr_noised):
         return min_filter(arr, int(param))
     elif command == '--max':
         return max_filter(arr, int(param))
-    elif command == '--laplacian':
-        return laplacian_filter(arr)
+    elif command == '--slaplace':
+        return universal_laplacian_filter(arr, kernel)
+    elif command == '--olaplace':
+        return optimized_laplacian_filter(arr)
     elif command in ['--cmean', '--cvariance', '--cstdev', '--cvarcoi', '--casyco', '--cflattening', '--cvarcoii', '--centropy']:
         histogram, _ = np.histogram(arr, bins=256, range=(0, 256))
         total_pixels = arr.size
@@ -184,6 +193,12 @@ if len(sys.argv) < 2:
     sys.exit()
 
 image_path = sys.argv[1]
+
+if len(sys.argv) < 3:
+    print("No command specified.")
+    print_help()
+    sys.exit()
+
 command = sys.argv[2]
 
 # Open the main image
