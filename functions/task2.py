@@ -162,9 +162,12 @@ def apply_exponential_transformation(channel, g_min, g_max):
     N = channel.size
     histogram, _ = np.histogram(channel, bins=256, range=[0, 256])
     cdf = np.cumsum(histogram) / N  
-    alpha = 30
 
-    transform = lambda f: g_min - alpha * np.log(1 - cdf[f])
+    epsilon = 1e-10
+    cdf_max = cdf[-1] 
+    alpha = (g_min - g_max) / np.log(np.maximum(epsilon, 1 - cdf_max))
+
+    transform = lambda f: g_min - alpha * np.log(1 - cdf[f]) if cdf[f] < 1 else g_max
     new_channel = np.zeros_like(channel, dtype=np.float32)
     for f in range(256):
         new_channel[channel == f] = transform(f)
