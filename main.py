@@ -2,94 +2,19 @@ from PIL import Image
 import numpy as np
 import sys
 
-from image_functions import (doBrightness, doContrast, doNegative, 
-                             doDefault, doVerticalFlip, doHorizontalFlip, 
-                             doDiagonalFlip, doShrink, doEnlarge, min_filter, max_filter, adaptive_median_filter, mse, pmse, snr, psnr, max_diff,
-                             mean, variance, std_dev, variation_coeff_1, asymmetry_coeff, flattening_coeff, variation_coeff_2, entropy, optimized_laplacian_filter, universal_laplacian_filter, roberts_operator_ii, create_histogram, exponential_density_function)
+from functions.help import (print_help)
 
-def print_help():
-    help_text = """
-    Available Commands:
-    
-    --help                : Show this help message and exit.
-    
-    --negative            : Apply a negative filter to the image.
-    
-    --default             : Reset the image to the original state.
-    
-    --vflip               : Apply vertical flip to the image.
-    
-    --hflip               : Apply horizontal flip to the image.
-    
-    --dflip               : Apply diagonal flip to the image.
-    
-    --brightness <val>    : Adjust brightness by the specified value. Range: [-255, 255].
-                            Example: --brightness 50 increases brightness; --brightness -50 decreases it.
-    
-    --contrast <val>      : Adjust contrast by the specified factor. Range: [0, 5.0].
-                            Example: --contrast 1.2 increases contrast by 20%; --contrast 0.8 decreases it.
-    
-    --shrink <val>        : Shrink the image by a specific factor. Range: (1.0, 5.0].
-                            Example: --shrink 1.5 shrinks the image by 1.5x.
-    
-    --enlarge <val>       : Enlarge the image by a specific factor. Range: (1.0, 5.0].
-                            Example: --enlarge 1.5 enlarges the image by 1.5x.
-    
-    --min                 : Apply a minimum filter with a kernel to reduce noise.
-                            Example: --min (applies a 3x3 minimum filter kernel).
-    
-    --max                 : Apply a maximum filter with a kernel to enhance details.
-                            Example: --max (applies a 3x3 maximum filter kernel).
-    
-    --adaptive            : Apply adaptive median filtering to reduce noise. Max kernel size: 7.
-                            Example: --adaptive (applies adaptive median filtering up to kernel size 7).
-    
-    --mse                 : Calculate Mean Squared Error between original and noised image.
-                            Example: --mse
-    
-    --pmse                : Calculate Peak Mean Square Error.
-                            Example: --pmse
-    
-    --snr                 : Calculate Signal-to-Noise Ratio.
-                            Example: --snr
-    
-    --psnr                : Calculate Peak Signal-to-Noise Ratio.
-                            Example: --psnr
-    
-    --md                  : Calculate the maximum difference between the original and noised image.
-                            Example: --md
-    
-    --slaplace            : Apply Laplacian filter to the image.
-                            Example: --slaplace
+from functions.task1 import (do_brightness, do_contrast, do_negative, 
+                             do_default, do_vertical_flip, do_horizontal_flip, 
+                             do_diagonal_flip, do_shrink, do_enlarge, min_filter, 
+                             max_filter, adaptive_median_filter, mse, pmse, 
+                             snr, psnr, max_diff)
 
-    --olaplace             : Apply Laplacian optimized filter to the image.
-                             Example: --olaplace
-    
-    --cmean               : Compute and display the mean of the image.
-                            Example: --cmean
-    
-    --cvariance           : Compute and display the variance of the image.
-                            Example: --cvariance
-    
-    --cstdev              : Compute and display the standard deviation of the image.
-                            Example: --cstdev
-    
-    --cvarcoi             : Compute and display the variation coefficient I of the image.
-                            Example: --cvarcoi
-    
-    --casyco              : Compute and display the asymmetry coefficient of the image.
-                            Example: --casyco
-    
-    --cflattening         : Compute and display the flattening coefficient of the image.
-                            Example: --cflattening
-    
-    --cvarcoii            : Compute and display the variation coefficient II of the image.
-                            Example: --cvarcoii
-    
-    --centropy            : Compute and display the entropy of the image.
-                            Example: --centropy
-    """
-    print(help_text)
+from functions.task2 import (mean, variance, std_dev, variation_coeff_1, 
+                             asymmetry_coeff, flattening_coeff, 
+                             variation_coeff_2, entropy, optimized_laplacian_filter, 
+                             universal_laplacian_filter, roberts_operator_ii, 
+                             create_histogram, exponential_density_function)
 
 def apply_command(command, param, arr, arr_noised):
     kernel = np.array(
@@ -100,15 +25,15 @@ def apply_command(command, param, arr, arr_noised):
         print_help()
         sys.exit()
     elif command == '--negative':
-        return doNegative(arr)
+        return do_negative(arr)
     elif command == '--default':
-        return doDefault(arr)
+        return do_default(arr)
     elif command == '--vflip':
-        return doVerticalFlip(arr)
+        return do_vertical_flip(arr)
     elif command == '--hflip':
-        return doHorizontalFlip(arr)
+        return do_horizontal_flip(arr)
     elif command == '--dflip':
-        return doDiagonalFlip(arr)
+        return do_diagonal_flip(arr)
     elif command == '--mse':
         mse_value = mse(arr, arr_noised)
         print("Mean Squared Error: " + str(mse_value))
@@ -125,13 +50,13 @@ def apply_command(command, param, arr, arr_noised):
         md_value = max_diff(arr, arr_noised)
         print("Max difference: " + str(md_value))
     elif command == '--brightness':
-        return doBrightness(arr, int(param))
+        return do_brightness(arr, int(param))
     elif command == '--contrast':
-        return doContrast(arr, float(param))
+        return do_contrast(arr, float(param))
     elif command == '--shrink':
-        return doShrink(arr, int(param))
+        return do_shrink(arr, int(param))
     elif command == '--enlarge':
-        return doEnlarge(arr, int(param))
+        return do_enlarge(arr, int(param))
     elif command == '--adaptive':
         return adaptive_median_filter(arr, int(param))
     elif command == '--min':
@@ -240,7 +165,9 @@ else:
 
 arr = apply_command(command, param, arr1, arr_noised)
 
-if command not in ['--mse', '--pmse', '--snr', '--psnr', '--md', '--cmean', '--cvariance', '--cstdev', '--cvarcoi', '--casyco', '--cflattening', '--cvarcoii', '--centropy']:
+if command not in ['--mse', '--pmse', '--snr', '--psnr', '--md', '--cmean', 
+                  '--cvariance', '--cstdev', '--cvarcoi', '--casyco', 
+                  '--cflattening', '--cvarcoii', '--centropy', '--histogram']:
     newIm = Image.fromarray(arr.astype(np.uint8))
     newIm.save("result.bmp")
     print("Output saved as 'result.bmp'")
