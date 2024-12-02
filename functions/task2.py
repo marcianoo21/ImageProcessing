@@ -1,53 +1,18 @@
-from PIL import Image
-import numpy as np
-from scipy.ndimage import convolve
-import matplotlib.pyplot as plt
-import cv2
 import os
+import shutil
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
 
-# def universal_laplacian_filter(arr, kernel):
-#     if arr.ndim == 2:  # Grayscale image
-#         filtered_image = convolve(arr, kernel, mode='reflect')
-#         return np.clip(filtered_image, 0, 255).astype(np.uint8)
-#     elif arr.ndim == 3:  # Color image
-#         filtered_channels = [convolve(arr[:, :, ch], kernel, mode='reflect') for ch in range(arr.shape[2])]
-#         filtered_image = np.stack(filtered_channels, axis=-1)
-#         return np.clip(filtered_image, 0, 255).astype(np.uint8)
+def universal_laplacian_filter(arr, kernel):
+    if arr.ndim == 2:  # Grayscale image
+        filtered_image = convolve(arr, kernel, mode='reflect')
+        return np.clip(filtered_image, 0, 255).astype(np.uint8)
+    elif arr.ndim == 3:  # Color image
+        filtered_channels = [convolve(arr[:, :, ch], kernel, mode='reflect') for ch in range(arr.shape[2])]
+        filtered_image = np.stack(filtered_channels, axis=-1)
+        return np.clip(filtered_image, 0, 255).astype(np.uint8)
     
-def universal_laplacian_filter(image, mask):
-    def normalize(channel):
-        min_val = np.min(channel)
-        max_val = np.max(channel)
-        if max_val - min_val == 0:
-            return np.zeros_like(channel, dtype=np.uint8)
-        normalized_channel = 255 * (channel - min_val) / (max_val - min_val)
-        return normalized_channel.astype(np.uint8)
-
-    def apply_filter_to_channel(channel, mask):
-        k = mask.shape[0] // 2  
-        
-        padded_channel = cv2.copyMakeBorder(channel, k, k, k, k, cv2.BORDER_REPLICATE)
-        
-        filtered_channel = np.zeros_like(channel, dtype=np.float32)
-        
-        for i in range(channel.shape[0]):
-            for j in range(channel.shape[1]):
-                roi = padded_channel[i:i + mask.shape[0], j:j + mask.shape[1]]
-                filtered_channel[i, j] = np.sum(roi * mask)
-        
-        return normalize(filtered_channel)
-
-    if len(image.shape) == 3:  
-        channels = cv2.split(image)
-        filtered_channels = []
-        for channel in channels:
-            filtered_channel = apply_filter_to_channel(channel, mask)
-            filtered_channels.append(filtered_channel)
-        return cv2.merge(filtered_channels)
-    else:  
-        return apply_filter_to_channel(image, mask)
-
-
 def optimized_laplacian_filter(arr):
     laplacian_kernel = np.array([[1, -2, 1],
                                  [-2, 4, -2],
@@ -122,16 +87,19 @@ def variation_coeff_2(histogram, total_pixels):
 def entropy(histogram, total_pixels):
     return -np.sum((histogram / total_pixels) * np.log2(histogram / total_pixels + 1e-10))
 
-def create_histogram(arr, output_dir="histograms"):
+def create_histogram(arr, output_dir="histograms", channels=None):
     if arr is None:
         raise ValueError("Input image array is None. Ensure the image is loaded correctly.")
-
+    
+    # Ensure the directory exists and is empty
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
 
-    if len(arr.shape) == 2: 
+    if len(arr.shape) == 2:  # Grayscale image
         histogram, bins = np.histogram(arr, bins=256, range=[0, 256])
         plt.figure()
-        plt.plot(histogram, color='black')
+        plt.plot(histogram, color='black', alpha=0.7)
         plt.title("Grayscale Histogram")
         plt.xlabel("Pixel Intensity")
         plt.ylabel("Frequency")
@@ -139,20 +107,38 @@ def create_histogram(arr, output_dir="histograms"):
         plt.savefig(output_path)
         plt.close()
         print(f"Grayscale histogram saved at {output_path}")
-    elif len(arr.shape) == 3: 
-        channels = cv2.split(arr)
+
+    elif len(arr.shape) == 3:  # Color image
+        all_channels = {'blue': 0, 'green': 1, 'red': 2}
         colors = ['blue', 'green', 'red']
-        for i, (channel, color) in enumerate(zip(channels, colors)):
-            histogram, bins = np.histogram(channel, bins=256, range=[0, 256])
-            plt.figure()
-            plt.plot(histogram, color=color)
-            plt.title(f"{color.capitalize()} Channel Histogram")
-            plt.xlabel("Pixel Intensity")
-            plt.ylabel("Frequency")
-            output_path = os.path.join(output_dir, f"histogram_{color}.png")
-            plt.savefig(output_path)
-            plt.close()
-            print(f"{color.capitalize()} channel histogram saved at {output_path}")
+        channel_indices = []
+
+        if channels is None:  # Default to all channels
+            channel_indices = list(all_channels.values())
+            selected_colors = colors
+        else:  # Process specified channels
+            if not isinstance(channels, (list, tuple)):
+                raise ValueError("Channels must be a list or tuple of 'red', 'green', and/or 'blue'.")
+            selected_channels = [ch.lower() for ch in channels]
+            if not all(ch in all_channels for ch in selected_channels):
+                raise ValueError("Invalid channel specified. Choose from 'red', 'green', or 'blue'.")
+            channel_indices = [all_channels[ch] for ch in selected_channels]
+            selected_colors = [colors[i] for i in channel_indices]
+
+        plt.figure()
+        for idx, color in zip(channel_indices, selected_colors):
+            histogram, bins = np.histogram(cv2.split(arr)[idx], bins=256, range=[0, 256])
+            plt.plot(histogram, color=color, alpha=0.7, label=f"{color.capitalize()} Channel")
+        
+        plt.title("Selected Channels Histogram")
+        plt.xlabel("Pixel Intensity")
+        plt.ylabel("Frequency")
+        plt.legend()
+        output_path = os.path.join(output_dir, "histogram_selected_channels.png")
+        plt.savefig(output_path)
+        plt.close()
+        print(f"Histogram for selected channels saved at {output_path}")
+
     else:
         raise ValueError("Unsupported image format or corrupted image.")
 
@@ -175,17 +161,60 @@ def apply_exponential_transformation(channel, g_min, g_max):
     new_channel = np.clip(new_channel, g_min, g_max)
     return new_channel
 
-def exponential_density_function(image, g_min, g_max):
-    if len(image.shape) == 2: 
+def exponential_density_function(image, g_min, g_max, mode="default", ref_channel="green"):
+  # if (g_max <= g_min or g_min < 0 or g_max > 255):
+  #   raise ValueError(f"Invalid g_min or g_max.")
+
+    if len(image.shape) == 2:  
         return apply_exponential_transformation(image, g_min, g_max)
 
     elif len(image.shape) == 3: 
-        new_image = np.zeros_like(image, dtype=np.float32)
-        for c in range(image.shape[2]): 
-            channel = image[:, :, c]
-            new_image[:, :, c] = apply_exponential_transformation(channel, g_min, g_max)
+        all_channels = {'blue': 0, 'green': 1, 'red': 2}
+        if ref_channel not in all_channels:
+            raise ValueError(f"Invalid reference channel: {ref_channel}. Choose from 'blue', 'green', or 'red'.")
         
-        return new_image.astype(np.uint8)
+        ref_idx = all_channels[ref_channel]
+        ref = image[:, :, ref_idx]
 
+        if mode == "default":
+            new_image = np.zeros_like(image, dtype=np.float32)
+            for c in range(image.shape[2]): 
+                new_image[:, :, c] = apply_exponential_transformation(image[:, :, c], g_min, g_max)
+            return new_image.astype(np.uint8)
+
+        elif mode == "difference":
+            differences = [ref - image[:, :, i] for i in range(image.shape[2]) if i != ref_idx]
+            transformed_ref = apply_exponential_transformation(ref, g_min, g_max)
+            new_image = np.zeros_like(image, dtype=np.float32)
+            new_image[:, :, ref_idx] = transformed_ref
+
+            idx = 0
+            for i in range(image.shape[2]):
+                if i != ref_idx:
+                    new_channel = transformed_ref + differences[idx]
+                    new_channel = np.clip(new_channel, 0, 255)
+                    new_image[:, :, i] = new_channel
+                    idx += 1
+
+            return new_image.astype(np.uint8)
+
+        elif mode == "ratio":
+            ratios = [image[:, :, i] / (ref + 1e-10) for i in range(image.shape[2]) if i != ref_idx]
+            transformed_ref = apply_exponential_transformation(ref, g_min, g_max)
+            new_image = np.zeros_like(image, dtype=np.float32)
+            new_image[:, :, ref_idx] = transformed_ref
+
+            idx = 0
+            for i in range(image.shape[2]):
+                if i != ref_idx:
+                    new_channel = transformed_ref * ratios[idx]
+                    new_channel = np.clip(new_channel, 0, 255)
+                    new_image[:, :, i] = new_channel
+                    idx += 1
+
+            return new_image.astype(np.uint8)
+
+        else:
+            raise ValueError(f"Unsupported mode: {mode}. Choose from 'default', 'difference', or 'ratio'.")
     else:
         raise ValueError("Unsupported image format. The image should be 2D (grayscale) or 3D (color).")

@@ -70,9 +70,18 @@ def apply_command(command, param, arr, arr_noised):
     elif command == '--orobertsii':
         return roberts_operator_ii(arr)
     elif command == '--histogram':
-        return create_histogram(arr)
+        channels = None
+        if param:
+            channels = [ch.strip().lower() for ch in param.split(',')]
+        return create_histogram(arr, channels=channels)
     elif command == '--hexponent':
-        return exponential_density_function(arr, int(sys.argv[3]) , int(sys.argv[4]) )
+        mode = "default"
+        ref_channel = "green"
+        if len(sys.argv) > 5:
+            mode = sys.argv[5].lower()
+        if len(sys.argv) > 6:
+            ref_channel = sys.argv[6].lower()
+        return exponential_density_function(arr, int(sys.argv[3]), int(sys.argv[4]), mode, ref_channel)
     elif command in ['--cmean', '--cvariance', '--cstdev', '--cvarcoi', '--casyco', '--cflattening', '--cvarcoii', '--centropy']:
         histogram, _ = np.histogram(arr, bins=256, range=(0, 256))
         total_pixels = arr.size
@@ -142,6 +151,9 @@ except Exception as e:
 arr1 = np.array(im)
 
 # Check if additional parameter (value or second image) is provided
+param = None
+arr_noised = None
+
 if len(sys.argv) == 4:
     param = sys.argv[3]
     if command in ['--mse', '--pmse', '--snr', '--psnr', '--md']:
@@ -152,16 +164,6 @@ if len(sys.argv) == 4:
         except Exception as e:
             print(f"Failed to open comparison image: {param}. Error: {e}")
             sys.exit()
-    else:
-        # Convert param to numerical type for commands that need it
-        try:
-            param = float(param) if '.' in param else int(param)
-        except ValueError:
-            print(f"Invalid parameter value: {param}. Expected a number.")
-            sys.exit()
-else:
-    param = None
-    arr_noised = None
 
 arr = apply_command(command, param, arr1, arr_noised)
 
