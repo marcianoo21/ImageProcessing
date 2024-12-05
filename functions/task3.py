@@ -3,10 +3,12 @@ import cv2
 # Process of expending images, increasing brightness of the image if original image and pixel matches we replace part of image with mask
 def dilation(image, struct_elem):
     return cv2.dilate(image, struct_elem)
+    # A∩B  - część wspólna dwóch setów
 
 # Opposite process of dilation, shrinking image, if original image and pixel matches we replace only this pixels, the rest is 0
 def erosion(image, struct_elem):
     return cv2.erode(image, struct_elem)
+    # A⊆B - A jest subsetem B (wszystkie elementy z A muszą zawierać się w B)
 
 # erosion is followed by dilation operation
 # to identify gaps in image
