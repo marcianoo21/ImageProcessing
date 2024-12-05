@@ -1,6 +1,8 @@
 from PIL import Image
 import numpy as np
 import sys
+import cv2
+
 
 from functions.help import (print_help)
 
@@ -19,11 +21,14 @@ from functions.task2 import (mean, variance, std_dev, variation_coeff_1,
 from functions.task3 import  (dilation, erosion, opening, closing, hmt)
 
 def apply_command(command, param, arr, arr_noised):
-    struct_elem = np.array([
-    [1, 1, 1],
-    [1, 1, 1],
-    [1, 1, 1]
-], dtype=int)
+#     struct_elem = np.array([
+#     [1, 1, 1],
+#     [1, 1, 1],
+#     [1, 1, 1]
+# ], dtype=int)
+
+    struct_elem = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    
     kernel = np.array(
     [[0, -1, 0],
     [-1, 4, -1],
