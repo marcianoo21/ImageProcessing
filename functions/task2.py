@@ -6,37 +6,36 @@ import matplotlib.pyplot as plt
 
 def universal_laplacian_filter(arr, kernel):
     if arr.ndim == 2:  # Grayscale image
-        filtered_image = convolve(arr, kernel, mode='reflect')
+        filtered_image = cv2.filter2D(arr, -1, kernel)
         return np.clip(filtered_image, 0, 255).astype(np.uint8)
     elif arr.ndim == 3:  # Color image
-        filtered_channels = [convolve(arr[:, :, ch], kernel, mode='reflect') for ch in range(arr.shape[2])]
+        filtered_channels = [cv2.filter2D(arr[:, :, ch], -1, kernel) for ch in range(arr.shape[2])]
         filtered_image = np.stack(filtered_channels, axis=-1)
         return np.clip(filtered_image, 0, 255).astype(np.uint8)
-    
+
 def optimized_laplacian_filter(arr):
     laplacian_kernel = np.array([[1, -2, 1],
                                  [-2, 4, -2],
                                  [1, -2, 1]])
     
-    if arr.ndim == 2:  
-        filtered_image = convolve(arr, laplacian_kernel, mode='nearest')
+    if arr.ndim == 2:  # Grayscale image
+        filtered_image = cv2.filter2D(arr, -1, laplacian_kernel)
         edge_image = np.abs(filtered_image)  
         edge_image = np.clip(edge_image, 0, 255)  
         return edge_image.astype(np.uint8)
 
-  
-    elif arr.ndim == 3:  
+    elif arr.ndim == 3:  # Color image
         filtered_image = np.zeros_like(arr)
         for ch in range(arr.shape[2]):
-            filtered_image[:, :, ch] = convolve(arr[:, :, ch], laplacian_kernel, mode='nearest')
+            filtered_image[:, :, ch] = cv2.filter2D(arr[:, :, ch], -1, laplacian_kernel)
         
         edge_image = np.abs(filtered_image)
         edge_image = np.clip(edge_image, 0, 255)  
         return edge_image.astype(np.uint8)
 
     else:
-        raise ValueError("Input array must be a 2D (grayscale) or 3D (color) image.")
-
+        raise ValueError("Input array must be a 2D (grayscale) or 3D (color)") 
+                         
 def roberts_operator_ii(image):
     if len(image.shape) == 3:  
         channels = cv2.split(image)
