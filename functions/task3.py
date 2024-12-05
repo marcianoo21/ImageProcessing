@@ -2,20 +2,27 @@ import numpy as np
 from scipy.ndimage import binary_dilation, binary_erosion
 from PIL import Image
 
-
+# Process of expending images, increasing brightness of the image if original image and pixel matches we replace part of image with mask
 def dilation(image, struct_elem):
     """Perform dilation on a binary image using the given structural element."""
     return binary_dilation(image, structure=struct_elem).astype(int)
 
+# Opposite process of dilation, shrinking image, if original image and pixel matches we replace only this pixels, the rest is 0
 def erosion(image, struct_elem):
     """Perform erosion on a binary image using the given structural element."""
     return binary_erosion(image, structure=struct_elem).astype(int)
 
+# erosion is followed by dilation operation
+# to identify gaps in image
+# to make edges sharper or smoother
+# isolating touching images
 def opening(image, struct_elem):
     """Perform opening (erosion followed by dilation) on a binary image."""
     eroded = erosion(image, struct_elem)
     return dilation(eroded, struct_elem)
 
+# dilation is followed by erosion
+# to eliminate small holes
 def closing(image, struct_elem):
     """Perform closing (dilation followed by erosion) on a binary image."""
     dilated = dilation(image, struct_elem)
