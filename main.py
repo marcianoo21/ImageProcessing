@@ -16,7 +16,14 @@ from functions.task2 import (mean, variance, std_dev, variation_coeff_1,
                              universal_laplacian_filter, roberts_operator_ii, 
                              create_histogram, exponential_density_function)
 
+from functions.task3 import  (dilation, erosion, opening, closing, hmt)
+
 def apply_command(command, param, arr, arr_noised):
+    struct_elem = np.array([
+    [1, 1, 1],
+    [1, 1, 1],
+    [1, 1, 1]
+], dtype=int)
     kernel = np.array(
     [[0, -1, 0],
     [-1, 4, -1],
@@ -69,6 +76,14 @@ def apply_command(command, param, arr, arr_noised):
         return optimized_laplacian_filter(arr)
     elif command == '--orobertsii':
         return roberts_operator_ii(arr)
+    elif command == '--dilation':
+        return dilation(arr, struct_elem)
+    elif command == '--erosion':
+        return erosion(arr, struct_elem)
+    elif command == '--opening':
+        return opening(arr, struct_elem)
+    elif command == '--closing':
+        return closing(arr, struct_elem)
     elif command == '--histogram':
         channels = None
         if param:
