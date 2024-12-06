@@ -21,13 +21,17 @@ from functions.task2 import (mean, variance, std_dev, variation_coeff_1,
 from functions.task3 import  (dilation, erosion, opening, closing, hmt, operation_1, operation_2, operation_3)
 
 def apply_command(command, param, arr, arr_noised):
-#     struct_elem = np.array([
-#     [1, 1, 1],
-#     [1, 1, 1],
-#     [1, 1, 1]
-# ], dtype=int)
+    struct_elem = np.array([
+    [1, 0, 1],
+    [0, 0, 0],
+    [1, 0, 1]
+], dtype=np.uint8)
 
-    struct_elem = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    # struct_elem = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    struct_elem1 = np.array(
+              [[0, 1, 0],
+               [1, 1, 1],
+               [0, 1, 0]], dtype=np.uint8)
     
     kernel = np.array(
     [[0, -1, 0],
@@ -89,6 +93,8 @@ def apply_command(command, param, arr, arr_noised):
         return opening(arr, struct_elem)
     elif command == '--closing':
         return closing(arr, struct_elem)
+    elif command == '--hmt':
+        return hmt(arr, struct_elem, struct_elem1)
     elif command == '--operation1':
         return operation_1(arr, struct_elem)
     elif command == '--operation2':
