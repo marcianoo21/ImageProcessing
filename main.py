@@ -18,7 +18,7 @@ from functions.task2 import (mean, variance, std_dev, variation_coeff_1,
                              universal_laplacian_filter, roberts_operator_ii, 
                              create_histogram, exponential_density_function)
 
-from functions.task3 import  (dilation, erosion, opening, closing, hmt)
+from functions.task3 import  (dilation, erosion, opening, closing, hmt, operation_1, operation_2, operation_3)
 
 def apply_command(command, param, arr, arr_noised):
 #     struct_elem = np.array([
@@ -89,6 +89,12 @@ def apply_command(command, param, arr, arr_noised):
         return opening(arr, struct_elem)
     elif command == '--closing':
         return closing(arr, struct_elem)
+    elif command == '--operation1':
+        return operation_1(arr, struct_elem)
+    elif command == '--operation2':
+        return operation_2(arr, struct_elem)
+    elif command == '--operation3':
+        return operation_3(arr, struct_elem)
     elif command == '--histogram':
         channels = None
         if param:
