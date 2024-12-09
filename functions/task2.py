@@ -52,8 +52,8 @@ def roberts_operator_ii_single_channel(image):
     
     filtered_image = np.zeros_like(image, dtype=np.float32)
     
-    for n in range(height - 1):  # Exclude the last row
-        for m in range(width - 1):  # Exclude the last column
+    for n in range(height - 1):  
+        for m in range(width - 1): 
             diff1 = abs(float(image[n, m]) - float(image[n + 1, m + 1]))
             diff2 = abs(float(image[n, m + 1]) - float(image[n + 1, m]))
             
@@ -112,10 +112,10 @@ def create_histogram(arr, output_dir="histograms", channels=None):
         colors = ['blue', 'green', 'red']
         channel_indices = []
 
-        if channels is None:  # Default to all channels
+        if channels is None:  
             channel_indices = list(all_channels.values())
             selected_colors = colors
-        else:  # Process specified channels
+        else:  
             if not isinstance(channels, (list, tuple)):
                 raise ValueError("Channels must be a list or tuple of 'red', 'green', and/or 'blue'.")
             selected_channels = [ch.lower() for ch in channels]
@@ -142,6 +142,23 @@ def create_histogram(arr, output_dir="histograms", channels=None):
         raise ValueError("Unsupported image format or corrupted image.")
 
     return arr
+
+def uniform_pdf(channel, g_min, g_max):
+    histogram, _ = np.histogram(channel, bins=256, range=[0, 256])
+    N = channel.size
+
+    cdf = np.cumsum(histogram)
+
+    transform = lambda f: g_min + (g_max - g_min) * (1 / N) * cdf[f]
+
+    transformed_channel = np.zeros_like(channel, dtype=np.float32)
+    for f in range(256):
+        transformed_channel[channel == f] = transform(f)
+
+    transformed_channel = np.clip(transformed_channel, g_min, g_max)
+
+    return transformed_channel.astype(np.uint8)
+
 
 def apply_exponential_transformation(channel, g_min, g_max):
     N = channel.size
