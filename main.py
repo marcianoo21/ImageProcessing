@@ -16,7 +16,7 @@ from functions.task2 import (mean, variance, std_dev, variation_coeff_1,
                              asymmetry_coeff, flattening_coeff, 
                              variation_coeff_2, entropy, optimized_laplacian_filter, 
                              universal_laplacian_filter, roberts_operator_ii, 
-                             create_histogram, exponential_density_function)
+                             create_histogram, exponential_density_function, uniform_pdf)
 
 from functions.task3 import  (dilation, erosion, opening, closing, hmt, operation_1, operation_2, operation_3)
 
@@ -101,6 +101,8 @@ def apply_command(command, param, arr, arr_noised):
         return operation_2(arr, struct_elem)
     elif command == '--operation3':
         return operation_3(arr, struct_elem)
+    elif command == '--uni':
+        return uniform_pdf(arr, int(sys.argv[3]), int(sys.argv[4]))
     elif command == '--histogram':
         channels = None
         if param:
