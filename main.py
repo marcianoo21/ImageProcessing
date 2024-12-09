@@ -202,8 +202,13 @@ if len(sys.argv) == 4:
 arr = apply_command(command, param, arr1, arr_noised)
 
 if command not in ['--mse', '--pmse', '--snr', '--psnr', '--md', '--cmean', 
-                  '--cvariance', '--cstdev', '--cvarcoi', '--casyco', 
-                  '--cflattening', '--cvarcoii', '--centropy', '--histogram']:
-    newIm = Image.fromarray(arr.astype(np.uint8))
+                   '--cvariance', '--cstdev', '--cvarcoi', '--casyco', 
+                   '--cflattening', '--cvarcoii', '--centropy', '--histogram']:
+    if arr.dtype == bool:  
+        arr = (arr * 255).astype(np.uint8)  
+    else:
+        arr = arr.astype(np.uint8)  
+
+    newIm = Image.fromarray(arr)
     newIm.save("result.bmp")
     print("Output saved as 'result.bmp'")
