@@ -5,19 +5,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def filter2D(arr, kernel):
+    arr = arr.astype(np.float32)
+    kernel = kernel.astype(np.float32)
     height, width = arr.shape
     k_height, k_width = kernel.shape
-    pad_y, pad_x = k_height // 2, k_width // 2
+    pad_y, pad_x = k_height // 2, k_width // 2 # padding for kernel to be applied to every pixel
     filtered_image = np.zeros_like(arr)
     padded_image = np.pad(arr, ((pad_y, pad_y), (pad_x, pad_x)), mode='constant', constant_values=0)
-    
+
     for i in range(height):
         for j in range(width):
-            window = padded_image[i:i+k_height, j:j+k_width]
+            window = padded_image[i:i + k_height, j:j + k_width]
             filtered_value = np.sum(window * kernel)
             filtered_image[i, j] = filtered_value
+
+    filtered_image = np.clip(filtered_image, 0, 255).astype(np.uint8)
     
     return filtered_image
+
 
 def universal_laplacian_filter(arr, kernel):
     if arr.ndim == 2:
@@ -32,9 +37,9 @@ def universal_laplacian_filter(arr, kernel):
          
 
 def optimized_laplacian_filter(arr):
-    laplacian_kernel = np.array([[0, -1, 0],
-                                 [-1, 4, -1],
-                                 [0, -1, 0]])
+    laplacian_kernel = np.array([[-1, -1, -1],
+                                 [-1, 8, -1],
+                                 [-1, -1, -1]])
     
     if arr.ndim == 2:
         filtered_image = filter2D(arr, laplacian_kernel)
