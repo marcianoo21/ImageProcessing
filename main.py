@@ -1,7 +1,7 @@
 from PIL import Image
 import numpy as np
 import sys
-import cv2
+import time
 
 
 from functions.help import (print_help)
@@ -33,10 +33,9 @@ def apply_command(command, param, arr, arr_noised):
                [1, 1, 1],
                [0, 1, 0]], dtype=np.uint8)
     
-    kernel = np.array(
-    [[0, -1, 0],
-    [-1, 4, -1],
-    [0, -1, 0]])
+    kernel = np.array([[-1, -1, -1],
+                        [-1, 8, -1],
+                        [-1, -1, -1]])
     if command == '--help':
         print_help()
         sys.exit()
@@ -201,7 +200,11 @@ if len(sys.argv) == 4:
             print(f"Failed to open comparison image: {param}. Error: {e}")
             sys.exit()
 
+start_time = time.time()
 arr = apply_command(command, param, arr1, arr_noised)
+end_time = time.time()
+
+print(f"Execution time: {end_time - start_time:.4f} seconds")
 
 if command not in ['--mse', '--pmse', '--snr', '--psnr', '--md', '--cmean', 
                    '--cvariance', '--cstdev', '--cvarcoi', '--casyco', 
