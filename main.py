@@ -16,7 +16,7 @@ from functions.task2 import (mean, variance, std_dev, variation_coeff_1,
                              asymmetry_coeff, flattening_coeff, 
                              variation_coeff_2, entropy, optimized_laplacian_filter, 
                              universal_laplacian_filter, roberts_operator_ii, 
-                             create_histogram, exponential_density_function, uniform_pdf)
+                             create_histogram, exponential_density_function, uniform_pdf, hiperbolic_density_function)
 
 from functions.task3 import  (dilation, erosion, opening, closing, hmt, operation_1, operation_2, operation_3)
 
@@ -116,6 +116,8 @@ def apply_command(command, param, arr, arr_noised):
         if len(sys.argv) > 6:
             ref_channel = sys.argv[6].lower()
         return exponential_density_function(arr, int(sys.argv[3]), int(sys.argv[4]), mode, ref_channel)
+    elif command == '--hhyper':
+        return hiperbolic_density_function(arr, int(sys.argv[3]), int(sys.argv[4]))
     elif command in ['--cmean', '--cvariance', '--cstdev', '--cvarcoi', '--casyco', '--cflattening', '--cvarcoii', '--centropy']:
         histogram, _ = np.histogram(arr, bins=256, range=(0, 256))
         total_pixels = arr.size

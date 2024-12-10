@@ -4,38 +4,56 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
+def filter2D(arr, kernel):
+    height, width = arr.shape
+    k_height, k_width = kernel.shape
+    pad_y, pad_x = k_height // 2, k_width // 2
+    filtered_image = np.zeros_like(arr)
+    padded_image = np.pad(arr, ((pad_y, pad_y), (pad_x, pad_x)), mode='constant', constant_values=0)
+    
+    for i in range(height):
+        for j in range(width):
+            window = padded_image[i:i+k_height, j:j+k_width]
+            filtered_value = np.sum(window * kernel)
+            filtered_image[i, j] = filtered_value
+    
+    return filtered_image
+
 def universal_laplacian_filter(arr, kernel):
-    if arr.ndim == 2:  # Grayscale image
-        filtered_image = cv2.filter2D(arr, -1, kernel)
+    if arr.ndim == 2:
+        filtered_image = filter2D(arr, kernel)
         return np.clip(filtered_image, 0, 255).astype(np.uint8)
-    elif arr.ndim == 3:  # Color image
-        filtered_channels = [cv2.filter2D(arr[:, :, ch], -1, kernel) for ch in range(arr.shape[2])]
+    elif arr.ndim == 3:
+        filtered_channels = [filter2D(arr[:, :, ch], kernel) for ch in range(arr.shape[2])]
         filtered_image = np.stack(filtered_channels, axis=-1)
         return np.clip(filtered_image, 0, 255).astype(np.uint8)
+    else:
+        raise ValueError("Input array must be a 2D (grayscale) or 3D (color)") 
+         
 
 def optimized_laplacian_filter(arr):
-    laplacian_kernel = np.array([[1, -2, 1],
-                                 [-2, 4, -2],
-                                 [1, -2, 1]])
+    laplacian_kernel = np.array([[0, -1, 0],
+                                 [-1, 4, -1],
+                                 [0, -1, 0]])
     
-    if arr.ndim == 2:  # Grayscale image
-        filtered_image = cv2.filter2D(arr, -1, laplacian_kernel)
-        edge_image = np.abs(filtered_image)  
-        edge_image = np.clip(edge_image, 0, 255)  
+    if arr.ndim == 2:
+        filtered_image = filter2D(arr, laplacian_kernel)
+        edge_image = np.abs(filtered_image)
+        edge_image = np.clip(edge_image, 0, 255)
         return edge_image.astype(np.uint8)
 
-    elif arr.ndim == 3:  # Color image
+    elif arr.ndim == 3:
         filtered_image = np.zeros_like(arr)
         for ch in range(arr.shape[2]):
-            filtered_image[:, :, ch] = cv2.filter2D(arr[:, :, ch], -1, laplacian_kernel)
+            filtered_image[:, :, ch] = filter2D(arr[:, :, ch], laplacian_kernel)
         
         edge_image = np.abs(filtered_image)
-        edge_image = np.clip(edge_image, 0, 255)  
+        edge_image = np.clip(edge_image, 0, 255)
         return edge_image.astype(np.uint8)
 
     else:
         raise ValueError("Input array must be a 2D (grayscale) or 3D (color)") 
-                         
+                 
 def roberts_operator_ii(image):
     if len(image.shape) == 3:  
         channels = cv2.split(image)
@@ -178,8 +196,6 @@ def apply_exponential_transformation(channel, g_min, g_max):
     return new_channel
 
 def exponential_density_function(image, g_min, g_max, mode="default", ref_channel="green"):
-  # if (g_max <= g_min or g_min < 0 or g_max > 255):
-  #   raise ValueError(f"Invalid g_min or g_max.")
 
     if len(image.shape) == 2:  
         return apply_exponential_transformation(image, g_min, g_max)
@@ -234,3 +250,32 @@ def exponential_density_function(image, g_min, g_max, mode="default", ref_channe
             raise ValueError(f"Unsupported mode: {mode}. Choose from 'default', 'difference', or 'ratio'.")
     else:
         raise ValueError("Unsupported image format. The image should be 2D (grayscale) or 3D (color).")
+    
+def apply_hiperbolic_transformation(channel, g_min, g_max):
+    N = channel.size
+    histogram, _ = np.histogram(channel, bins=256, range=[0, 256])
+    cdf = np.cumsum(histogram) / N  
+
+    transform = lambda f: g_min * (g_max / g_min) ** cdf[f] if cdf[f] < 1 else g_max
+    new_channel = np.zeros_like(channel, dtype=np.float32)
+    for f in range(256):
+        new_channel[channel == f] = transform(f)
+
+    new_channel = np.clip(new_channel, g_min, g_max)
+    return new_channel
+
+def hiperbolic_density_function(image, g_min, g_max):
+    if g_min >= 1:
+        if len(image.shape) == 2:  
+            return apply_hiperbolic_transformation(image, g_min, g_max)
+
+        elif len(image.shape) == 3:         
+            new_image = np.zeros_like(image, dtype=np.float32)
+            for c in range(image.shape[2]): 
+                new_image[:, :, c] = apply_hiperbolic_transformation(image[:, :, c], g_min, g_max)
+            return new_image.astype(np.uint8)
+
+        else:
+            raise ValueError("Unsupported image format. The image should be 2D (grayscale) or 3D (color).")
+    else:
+        raise ValueError("Minimal value for g_min is 1")
