@@ -18,7 +18,8 @@ from functions.task2 import (mean, variance, std_dev, variation_coeff_1,
                              universal_laplacian_filter, roberts_operator_ii, 
                              create_histogram, exponential_density_function, uniform_pdf, hiperbolic_density_function)
 
-from functions.task3 import  (dilation, erosion, opening, closing, hmt, operation_1, operation_2, operation_3)
+from functions.task3 import  (dilation, erosion, opening, closing, hmt,
+                               operation_1, operation_2, operation_3, region_growing_rgb)
 
 def apply_command(command, param, arr, arr_noised):
     struct_elem = np.array([
@@ -105,6 +106,12 @@ def apply_command(command, param, arr, arr_noised):
         return operation_3(arr, struct_elem)
     elif command == '--uni':
         return uniform_pdf(arr, int(sys.argv[3]), int(sys.argv[4]))
+    elif command == '--grow':
+        seed_x = 100
+        seed_y = 150
+        threshold = 250
+        seed = (seed_x, seed_y)
+        return region_growing_rgb(arr, seed ,threshold)
     elif command == '--histogram':
         channels = None
         if param:
