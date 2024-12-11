@@ -1,5 +1,7 @@
-import cv2
 import numpy as np
+from collections import deque
+
+
 
 def erosion(image, struct_elem):
 
@@ -85,3 +87,30 @@ def operation_3(image, struct_elem):
     dilated_image = dilation(image, struct_elem)
     eroded_image = erosion(image, struct_elem)
     return subtract(dilated_image, eroded_image)
+
+def region_growing_rgb(image, seed, threshold):
+  
+    rows, cols, _ = image.shape
+    segmented = np.zeros((rows, cols), dtype=bool)
+    queue = deque([seed])
+    seed_color = image[seed]  # The RGB color at the seed point
+    
+    while queue:
+        x, y = queue.popleft()
+        
+        if segmented[x, y]:
+            continue
+        
+        segmented[x, y] = True
+        
+        # Check 8-neighbor pixels
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < rows and 0 <= ny < cols and not segmented[nx, ny]:
+                neighbor_color = image[nx, ny]
+                # Calculate Euclidean distance in RGB space
+                color_diff = np.linalg.norm(neighbor_color - seed_color)
+                if color_diff <= threshold:
+                    queue.append((nx, ny))
+    
+    return segmented.astype(np.uint8) * 255  # Convert boolean mask to binary image
