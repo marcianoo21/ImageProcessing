@@ -40,6 +40,10 @@ def optimized_laplacian_filter(arr):
     laplacian_kernel = np.array([[-1, -1, -1],
                                  [-1, 8, -1],
                                  [-1, -1, -1]])
+
+    # laplacian_kernel = np.array([[0, -1, 0],
+    #                              [-1, 4, -1],
+    #                              [0, -1, 0]])
     
     if arr.ndim == 2:
         filtered_image = filter2D(arr, laplacian_kernel)
