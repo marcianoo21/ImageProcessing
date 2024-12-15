@@ -8,16 +8,12 @@ def erosion(image, struct_elem):
     k_height, k_width = struct_elem.shape
     pad_height, pad_width = k_height // 2, k_width // 2
 
-    # Dodaj obramowanie do obrazu
     padded_image = np.pad(image, ((pad_height, pad_height), (pad_width, pad_width)), mode='constant', constant_values=0)
     result = np.zeros_like(image)
 
-    # Przesuwamy element strukturalny po obrazie
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
-            # Wycinamy fragment obrazu o rozmiarze elementu strukturalnego
             region = padded_image[i:i + k_height, j:j + k_width]
-            # Sprawdzamy czy cały element strukturalny mieści się w regionie
             if np.all(region & struct_elem == struct_elem):
                 result[i, j] = 1
 
@@ -28,16 +24,12 @@ def dilation(image, struct_elem):
     k_height, k_width = struct_elem.shape
     pad_height, pad_width = k_height // 2, k_width // 2
 
-    # Dodaj obramowanie do obrazu
     padded_image = np.pad(image, ((pad_height, pad_height), (pad_width, pad_width)), mode='constant', constant_values=0)
     result = np.zeros_like(image)
 
-    # Przesuwamy element strukturalny po obrazie
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
-            # Wycinamy fragment obrazu o rozmiarze elementu strukturalnego
             region = padded_image[i:i + k_height, j:j + k_width]
-            # Sprawdzamy czy zachodzi jakakolwiek część wspólna
             if np.any(region & struct_elem):
                 result[i, j] = 1
 
@@ -71,6 +63,7 @@ def hmt(image, struct_elem1, struct_elem2):
     complement_image = bitwise_not(image)
     erosion_image2 = erosion(complement_image, struct_elem2)
     return bitwise_and(erosion_image1, erosion_image2)
+
 
 # (A ⊕ B) \ A -dilation subtracts A
 def operation_1(image, struct_elem):
