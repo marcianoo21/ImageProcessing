@@ -22,17 +22,28 @@ from functions.task3 import  (dilation, erosion, opening, closing, hmt,
                                operation_1, operation_2, operation_3, region_growing_rgb)
 
 def apply_command(command, param, arr, arr_noised):
-    struct_elem = np.array([
-    [1, 0, 1],
-    [0, 0, 0],
-    [1, 0, 1]
-], dtype=np.uint8)
+    struct_elem = np.array(     [[0, 0, 0],
+                [0, 1, 0],
+                [0, 0, 0]]
+, dtype=np.uint8)
 
     # struct_elem = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     struct_elem1 = np.array(
-              [[0, 1, 0],
-               [1, 1, 1],
-               [0, 1, 0]], dtype=np.uint8)
+           [[1, 1, 1],
+                    [1, 0, 1],
+                    [1, 1, 1]]
+
+            , dtype=np.uint8)
+    
+    kernel1 = np.array([
+                    [0, 1, 1],
+                    [0, 0, 1],
+                    [0, 0, 1]])
+
+    kernel2 = np.array([
+                    [1, 0, 0],
+                    [1, 1, 0],
+                    [1, 1, 0]])
     
     # kernel = np.array([[0, -1, 0],
     #                     [-1, 4, -1],
@@ -97,7 +108,7 @@ def apply_command(command, param, arr, arr_noised):
     elif command == '--closing':
         return closing(arr, struct_elem)
     elif command == '--hmt':
-        return hmt(arr, struct_elem, struct_elem1)
+        return hmt(arr, kernel1, kernel2)
     elif command == '--operation1':
         return operation_1(arr, struct_elem)
     elif command == '--operation2':
