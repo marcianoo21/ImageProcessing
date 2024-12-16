@@ -37,32 +37,69 @@ def universal_laplacian_filter(arr, kernel):
          
 
 def optimized_laplacian_filter(arr):
-    laplacian_kernel = np.array([[-1, -1, -1],
-                                 [-1, 8, -1],
-                                 [-1, -1, -1]])
-
-    # laplacian_kernel = np.array([[0, -1, 0],
-    #                              [-1, 4, -1],
-    #                              [0, -1, 0]])
-    
+    # Jeśli obraz jest 2D (grayscale)
     if arr.ndim == 2:
-        filtered_image = filter2D(arr, laplacian_kernel)
-        edge_image = np.abs(filtered_image)
-        edge_image = np.clip(edge_image, 0, 255)
-        return edge_image.astype(np.uint8)
-
+        return laplacian_convolution(arr)
+    
+    # Jeśli obraz jest 3D (kolorowy)
     elif arr.ndim == 3:
-        filtered_image = np.zeros_like(arr)
+        filtered_image = np.zeros_like(arr, dtype=np.uint8)
         for ch in range(arr.shape[2]):
-            filtered_image[:, :, ch] = filter2D(arr[:, :, ch], laplacian_kernel)
-        
-        edge_image = np.abs(filtered_image)
-        edge_image = np.clip(edge_image, 0, 255)
-        return edge_image.astype(np.uint8)
-
+            filtered_image[:, :, ch] = laplacian_convolution(arr[:, :, ch])
+        return filtered_image
+    
     else:
-        raise ValueError("Input array must be a 2D (grayscale) or 3D (color)") 
-                 
+        raise ValueError("Input array must be a 2D (grayscale) or 3D (color) image.")
+
+def laplacian_convolution(image):
+    height, width = image.shape
+
+    filtered_image = np.zeros_like(image, dtype=np.float32)
+
+    padded_image = np.pad(image, ((1, 1), (1, 1)), mode='constant', constant_values=0).astype(np.float32)
+
+    for i in range(1, height + 1):
+        for j in range(1, width + 1):
+            center = 8 * padded_image[i, j]
+
+            neighbors = (
+                padded_image[i - 1, j - 1] + padded_image[i - 1, j] + padded_image[i - 1, j + 1] +
+                padded_image[i, j - 1] + padded_image[i, j + 1] +
+                padded_image[i + 1, j - 1] + padded_image[i + 1, j] + padded_image[i + 1, j + 1]
+            )
+
+            filtered_image[i - 1, j - 1] = center - neighbors
+
+    edge_image = np.clip(np.abs(filtered_image), 0, 255).astype(np.uint8)
+    return edge_image
+
+
+def merge(channels):
+    if not isinstance(channels, list) or len(channels) == 0:
+        raise ValueError("Input should be a non-empty list of channel arrays.")
+    
+    height, width = channels[0].shape
+    for channel in channels:
+        if channel.shape != (height, width):
+            raise ValueError("All channels must have the same dimensions.")
+    
+    merged_image = np.stack(channels, axis=-1)
+    return merged_image
+
+def normalize(image, min_value, max_value):
+    if min_value >= max_value:
+        raise ValueError("min_value must be less than max_value.")
+    
+    image = image.astype(np.float32)
+    min_pixel = np.min(image)
+    max_pixel = np.max(image)
+    
+    if max_pixel - min_pixel == 0:
+        return np.full_like(image, min_value, dtype=np.float32)
+    
+    normalized_image = (image - min_pixel) / (max_pixel - min_pixel) * (max_value - min_value) + min_value
+    return normalized_image
+
 def roberts_operator_ii(image):
     if len(image.shape) == 3:  
         channels = cv2.split(image)
@@ -70,7 +107,7 @@ def roberts_operator_ii(image):
         for channel in channels:
             processed_channel = roberts_operator_ii_single_channel(channel)
             processed_channels.append(processed_channel)
-        return cv2.merge(processed_channels)  
+        return merge(processed_channels)  
     else: 
         return roberts_operator_ii_single_channel(image)
 
@@ -86,7 +123,7 @@ def roberts_operator_ii_single_channel(image):
             
             filtered_image[n, m] = diff1 + diff2
     
-    filtered_image = cv2.normalize(filtered_image, None, 0, 255, cv2.NORM_MINMAX)
+    filtered_image = normalize(filtered_image, None, 0, 255, cv2.NORM_MINMAX)
     return filtered_image.astype(np.uint8)
 
 def mean(histogram, total_pixels):
