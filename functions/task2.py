@@ -37,32 +37,40 @@ def universal_laplacian_filter(arr, kernel):
          
 
 def optimized_laplacian_filter(arr):
-    laplacian_kernel = np.array([[-1, -1, -1],
-                                 [-1, 8, -1],
-                                 [-1, -1, -1]])
-
-    # laplacian_kernel = np.array([[0, -1, 0],
-    #                              [-1, 4, -1],
-    #                              [0, -1, 0]])
-    
     if arr.ndim == 2:
-        filtered_image = filter2D(arr, laplacian_kernel)
-        edge_image = np.abs(filtered_image)
-        edge_image = np.clip(edge_image, 0, 255)
-        return edge_image.astype(np.uint8)
-
+        return laplacian_convolution(arr)
+    
     elif arr.ndim == 3:
-        filtered_image = np.zeros_like(arr)
+        filtered_image = np.zeros_like(arr, dtype=np.uint8)
         for ch in range(arr.shape[2]):
-            filtered_image[:, :, ch] = filter2D(arr[:, :, ch], laplacian_kernel)
-        
-        edge_image = np.abs(filtered_image)
-        edge_image = np.clip(edge_image, 0, 255)
-        return edge_image.astype(np.uint8)
-
+            filtered_image[:, :, ch] = laplacian_convolution(arr[:, :, ch])
+        return filtered_image
+    
     else:
-        raise ValueError("Input array must be a 2D (grayscale) or 3D (color)") 
-                 
+        raise ValueError("Input array must be a 2D (grayscale) or 3D (color) image.")
+
+def laplacian_convolution(image):
+    height, width = image.shape
+
+    filtered_image = np.zeros_like(image, dtype=np.float32)
+
+    padded_image = np.pad(image, ((1, 1), (1, 1)), mode='constant', constant_values=0).astype(np.float32)
+
+    for i in range(1, height + 1):
+        for j in range(1, width + 1):
+            center = 8 * padded_image[i, j]
+
+            neighbors = (
+                padded_image[i - 1, j - 1] + padded_image[i - 1, j] + padded_image[i - 1, j + 1] +
+                padded_image[i, j - 1] + padded_image[i, j + 1] +
+                padded_image[i + 1, j - 1] + padded_image[i + 1, j] + padded_image[i + 1, j + 1]
+            )
+            
+            filtered_image[i - 1, j - 1] = center - neighbors
+
+    edge_image = np.clip(np.abs(filtered_image), 0, 255).astype(np.uint8)
+    return edge_image
+
 def roberts_operator_ii(image):
     if len(image.shape) == 3:  
         channels = cv2.split(image)

@@ -21,13 +21,15 @@ from functions.task2 import (mean, variance, std_dev, variation_coeff_1,
 from functions.task3 import  (dilation, erosion, opening, closing, hmt,
                                operation_1, operation_2, operation_3, region_growing_rgb)
 
+from functions.task4 import (fft_2d, ifft_2d, slow_fourier_transform, slow_inverse_fourier_transform, DFT)
+
+
 def apply_command(command, param, arr, arr_noised):
     struct_elem = np.array(     [[0, 0, 0],
                 [0, 1, 0],
                 [0, 0, 0]]
 , dtype=np.uint8)
 
-    # struct_elem = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     struct_elem1 = np.array(
            [[1, 1, 1],
                     [1, 0, 1],
@@ -123,6 +125,16 @@ def apply_command(command, param, arr, arr_noised):
         threshold = 250
         seed = (seed_x, seed_y)
         return region_growing_rgb(arr, seed ,threshold)
+    elif command == '--fft':
+        return np.abs(fft_2d(arr))
+    elif command == '--ifft':
+        return np.abs(ifft_2d(arr))
+    elif command == '--sfft':
+        return np.abs(slow_fourier_transform(arr))
+    elif command == '--sifft':
+        return np.abs(slow_inverse_fourier_transform(arr))
+    elif command == '--dft':
+        return DFT(arr)
     elif command == '--histogram':
         channels = None
         if param:
