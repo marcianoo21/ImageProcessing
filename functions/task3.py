@@ -3,17 +3,26 @@ from collections import deque
 
 def erosion(image, struct_elem):
 
-    k_height, k_width = struct_elem.shape
-    pad_height, pad_width = k_height // 2, k_width // 2
+    struct_len = len(struct_elem[0])
+    rows = image.shape[0]
+    cols = image.shape[1]
 
-    padded_image = np.pad(image, ((pad_height, pad_height), (pad_width, pad_width)), mode='constant', constant_values=0)
     result = np.zeros_like(image)
 
-    for i in range(image.shape[0]):
-        for j in range(image.shape[1]):
-            region = padded_image[i:i + k_height, j:j + k_width]
-            if np.all(region & struct_elem == struct_elem):
-                result[i, j] = 1
+    for i in range(rows):
+        for j in range(cols):
+            fits = True
+            for k in range(struct_len):
+                if i < rows and j + k < cols:
+                    if image[i][j + k] != struct_elem[0][k]:
+                        fits = False
+                        break
+                else:
+                    fits = False
+                    break
+
+            if fits:
+                result[i][j] = 1
 
     return result
 

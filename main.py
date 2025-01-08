@@ -25,9 +25,9 @@ from functions.task4 import (fft_2d, ifft_2d, slow_fourier_transform, slow_inver
 
 
 def apply_command(command, param, arr, arr_noised):
-    struct_elem = np.array(     [[0, 0, 0],
-                [0, 1, 0],
-                [0, 0, 0]]
+    struct_elem = np.array(     [[1, 1, 1],
+                [1, 1, 1],
+                [1, 1, 1]]
 , dtype=np.uint8)
 
     struct_elem1 = np.array(
