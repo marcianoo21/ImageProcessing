@@ -1,8 +1,6 @@
 import numpy as np
 from collections import deque
 
-
-
 def erosion(image, struct_elem):
 
     k_height, k_width = struct_elem.shape
