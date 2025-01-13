@@ -108,16 +108,53 @@ def create_band_cut_filter(shape, low_cutoff, high_cutoff):
     """Create a band-cut filter mask."""
     return 1 - create_band_pass_filter(shape, low_cutoff, high_cutoff)
 
-def create_low_pass_filter(shape, cutoff):
-    """Create a low-pass filter mask."""
-    N, M = shape
-    center = (N // 2, M // 2)
-    mask = np.zeros((N, M))
-    for x in range(N):
-        for y in range(M):
-            if np.sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2) <= cutoff:
-                mask[x, y] = 1
-    return mask
+def high_pass_directional_filter(image_array, direction='horizontal'):
+    # Wykonanie 2D FFT
+    dft = fft_2d(image_array)
+    dft_shifted = np.fft.fftshift(dft)  # Przesunięcie niskich częstotliwości na środek
+    
+    rows, cols = image_array.shape
+    crow, ccol = rows // 2, cols // 2  # Środek obrazu
+
+    # Tworzenie maski kierunkowej
+    mask = np.zeros((rows, cols), dtype=np.float32)
+    if direction == 'horizontal':  # Wykrywanie poziomych krawędzi
+        mask[crow-10:crow+10, :] = 1  # Przepuszcza tylko poziome pasmo
+    elif direction == 'vertical':  # Wykrywanie pionowych krawędzi
+        mask[:, ccol-10:ccol+10] = 1  # Przepuszcza tylko pionowe pasmo
+
+    # Zastosowanie maski
+    filtered_dft = dft_shifted * mask
+
+    # Odwrócenie przesunięcia i wykonanie odwrotnej transformacji
+    dft_filtered = np.fft.ifftshift(filtered_dft)
+    image_filtered = ifft_2d(dft_filtered)
+    
+    return np.abs(image_filtered)  # Zwracamy część rzeczywistą
+
+def phase_modifying_filter(image_array, k=1, l=1):
+    # Wykonanie 2D FFT
+    dft = fft_2d(image_array)
+    dft_shifted = np.fft.fftshift(dft)  # Przesunięcie niskich częstotliwości na środek
+    
+    rows, cols = image_array.shape
+    crow, ccol = rows // 2, cols // 2  # Środek obrazu
+
+    # Tworzenie maski fazowej P(n, m)
+    phase_mask = np.zeros((rows, cols), dtype=np.complex64)
+    for n in range(rows):
+        for m in range(cols):
+            exponent = -1j * ((k * n * 2 * np.pi / rows) + (l * m * 2 * np.pi / cols) + ((k + l) * np.pi))
+            phase_mask[n, m] = np.exp(exponent)
+
+    # Zastosowanie maski
+    filtered_dft = dft_shifted * phase_mask
+
+    # Odwrócenie przesunięcia i wykonanie odwrotnej transformacji
+    dft_filtered = np.fft.ifftshift(filtered_dft)
+    image_filtered = ifft_2d(dft_filtered)
+    
+    return np.abs(image_filtered)  # Zwracamy część rzeczywistą
 
 def apply_log_scaling(image):
     """Apply logarithmic scaling to enhance visibility of small values."""
