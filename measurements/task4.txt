@@ -1,0 +1,5 @@
+fft then ifft on lena_shrink_4.mp:
+Execution time: 0.0154 seconds
+
+dft then idft on lena_shrink_4.mp:
+Execution time: 805.6023 seconds

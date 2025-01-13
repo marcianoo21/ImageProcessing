@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
+import time
 
 def dft_2d(image):
     """Compute the 2D Discrete Fourier Transform (slow version)."""
@@ -35,31 +36,32 @@ def fft_2d(image):
 def ifft_2d(dft):
     """Compute the 2D Inverse Fast Fourier Transform using np.fft.ifft2."""
     return np.fft.ifft2(dft)
-# def fft_2d(image):
-#     """Compute the 2D Fast Fourier Transform manually."""
-#     N, M = image.shape
-#     # FFT in rows
-#     row_fft = np.zeros((N, M), dtype=complex)
-#     for i in range(N):
-#         row_fft[i, :] = np.fft.fft(image[i, :])
-#     # FFT in columns
-#     col_fft = np.zeros((N, M), dtype=complex)
-#     for j in range(M):
-#         col_fft[:, j] = np.fft.fft(row_fft[:, j])
-#     return col_fft
 
-# def ifft_2d(dft):
-#     """Compute the 2D Inverse Fast Fourier Transform manually."""
-#     N, M = dft.shape
-#     # IFFT in columns
-#     col_ifft = np.zeros((N, M), dtype=complex)
-#     for j in range(M):
-#         col_ifft[:, j] = np.fft.ifft(dft[:, j])
-#     # IFFT in rows
-#     row_ifft = np.zeros((N, M), dtype=complex)
-#     for i in range(N):
-#         row_ifft[i, :] = np.fft.ifft(col_ifft[i, :])
-#     return row_ifft
+def fft_2d(image):
+    """Compute the 2D Fast Fourier Transform manually."""
+    N, M = image.shape
+    # FFT in rows
+    row_fft = np.zeros((N, M), dtype=complex)
+    for i in range(N):
+        row_fft[i, :] = np.fft.fft(image[i, :])
+    # FFT in columns
+    col_fft = np.zeros((N, M), dtype=complex)
+    for j in range(M):
+        col_fft[:, j] = np.fft.fft(row_fft[:, j])
+    return col_fft
+
+def ifft_2d(dft):
+    """Compute the 2D Inverse Fast Fourier Transform manually."""
+    N, M = dft.shape
+    # IFFT in columns
+    col_ifft = np.zeros((N, M), dtype=complex)
+    for j in range(M):
+        col_ifft[:, j] = np.fft.ifft(dft[:, j])
+    # IFFT in rows
+    row_ifft = np.zeros((N, M), dtype=complex)
+    for i in range(N):
+        row_ifft[i, :] = np.fft.ifft(col_ifft[i, :])
+    return row_ifft
 
 def visualize_spectrum(dft, title="Spectrum"):
     """Visualize the magnitude and phase spectrum of a Fourier transform."""
@@ -124,21 +126,25 @@ def apply_log_scaling(image):
     return np.log(np.abs(image) + 1)
 
 if __name__ == "__main__":
-    image = np.array(Image.open('./images/lena.bmp'))  
+    image = np.array(Image.open('./images/lena_shrink_4.bmp'))  
+    start_time = time.time()
+    dft = dft_2d(image)
 
-    dft = fft_2d(image)
+    # visualize_spectrum(dft, title="Before Filtering")
 
-    visualize_spectrum(dft, title="Before Filtering")
+    # print(f"shape: {dft.shape}")
+    # f_filter = create_low_pass_filter(dft.shape, cutoff=362) #362 and 363
+    # filtered_dft = apply_filter(dft, f_filter)
 
-    print(f"shape: {dft.shape}")
-    f_filter = create_low_pass_filter(dft.shape, cutoff=362) #362 and 363
-    filtered_dft = apply_filter(dft, f_filter)
+    # visualize_spectrum(filtered_dft, title="After Filtering")
 
-    visualize_spectrum(filtered_dft, title="After Filtering")
+    # print(f"Filtered DFT Stats - min: {np.min(filtered_dft)}, max: {np.max(filtered_dft)}, mean: {np.mean(filtered_dft)}")
 
-    print(f"Filtered DFT Stats - min: {np.min(filtered_dft)}, max: {np.max(filtered_dft)}, mean: {np.mean(filtered_dft)}")
+    filtered_image = np.real(idft_2d(dft))  
+    
+    end_time = time.time()
 
-    filtered_image = np.real(ifft_2d(filtered_dft))  
+    print(f"Execution time: {end_time - start_time:.4f} seconds")
 
     print(f"Filtered Image Stats - min: {np.min(filtered_image)}, max: {np.max(filtered_image)}, mean: {np.mean(filtered_image)}")
 
