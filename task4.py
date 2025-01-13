@@ -55,6 +55,21 @@ def ifft_recursive(signal):
         combined[k + N // 2] = (even[k] - t) / 2
     return combined
 
+def fftshift_2d(img):
+    rows, cols = img.shape
+    
+    row_mid, col_mid = rows // 2, cols // 2
+
+    temp = np.zeros_like(img)
+    # top-left <-> bottom-right
+    temp[:row_mid, :col_mid] = img[row_mid:, col_mid:]
+    temp[row_mid:, col_mid:] = img[:row_mid, :col_mid]
+    # top-right <-> bottom-left
+    temp[:row_mid, col_mid:] = img[row_mid:, :col_mid]
+    temp[row_mid:, :col_mid] = img[:row_mid, col_mid:]
+
+    return temp
+
 
 def fft_2d(img):
     rows_fft = np.array([fft_recursive(row) for row in img])
@@ -63,6 +78,8 @@ def fft_2d(img):
 def ifft_2d(F):
     rows_ifft = np.array([ifft_recursive(row) for row in F])
     return np.array([ifft_recursive(col) for col in rows_ifft.T]).T
+
+
 def visualize_spectrum(dft, title="Spectrum"):
     """Visualize the magnitude and phase spectrum of a Fourier transform."""
     magnitude = np.log(np.abs(dft) + 1)  # Apply log for better visualization
