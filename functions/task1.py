@@ -33,7 +33,7 @@ def do_horizontal_flip(arr):
 def do_diagonal_flip(arr):
     return arr[::-1, ::-1]
 
-def do_shrink(param, arr):
+def do_shrink(arr, param):
     param = float(param)
     target_shape = (int(arr.shape[0] / param), int(arr.shape[1] / param))
     shrunk_image = np.array([
