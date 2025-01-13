@@ -28,39 +28,40 @@ def idft_2d(dft):
             idft[x, y] = sum_val / (N * M)
     return idft
 
-def fft_2d(image):
-    """Compute the 2D Fast Fourier Transform using np.fft.fft2."""
-    return np.fft.fft2(image)
+def fft_recursive(signal):
+    N = len(signal)
+    if N <= 1:  
+        return signal
+    even = fft_recursive(signal[0::2])
+    odd = fft_recursive(signal[1::2])
+    combined = [0] * N
+    for k in range(N // 2):
+        t = np.exp(-2j * np.pi * k / N) * odd[k]
+        combined[k] = even[k] + t
+        combined[k + N // 2] = even[k] - t
+    return combined
 
-def ifft_2d(dft):
-    """Compute the 2D Inverse Fast Fourier Transform using np.fft.ifft2."""
-    return np.fft.ifft2(dft)
-# def fft_2d(image):
-#     """Compute the 2D Fast Fourier Transform manually."""
-#     N, M = image.shape
-#     # FFT in rows
-#     row_fft = np.zeros((N, M), dtype=complex)
-#     for i in range(N):
-#         row_fft[i, :] = np.fft.fft(image[i, :])
-#     # FFT in columns
-#     col_fft = np.zeros((N, M), dtype=complex)
-#     for j in range(M):
-#         col_fft[:, j] = np.fft.fft(row_fft[:, j])
-#     return col_fft
+def ifft_recursive(signal):
+    N = len(signal)
+    if N <= 1: 
+        return signal
+    even = ifft_recursive(signal[0::2])
+    odd = ifft_recursive(signal[1::2])
+    combined = [0] * N
+    for k in range(N // 2):
+        t = np.exp(2j * np.pi * k / N) * odd[k]
+        combined[k] = (even[k] + t) / 2
+        combined[k + N // 2] = (even[k] - t) / 2
+    return combined
 
-# def ifft_2d(dft):
-#     """Compute the 2D Inverse Fast Fourier Transform manually."""
-#     N, M = dft.shape
-#     # IFFT in columns
-#     col_ifft = np.zeros((N, M), dtype=complex)
-#     for j in range(M):
-#         col_ifft[:, j] = np.fft.ifft(dft[:, j])
-#     # IFFT in rows
-#     row_ifft = np.zeros((N, M), dtype=complex)
-#     for i in range(N):
-#         row_ifft[i, :] = np.fft.ifft(col_ifft[i, :])
-#     return row_ifft
 
+def fft_2d(img):
+    rows_fft = np.array([fft_recursive(row) for row in img])
+    return np.array([fft_recursive(col) for col in rows_fft.T]).T
+
+def ifft_2d(F):
+    rows_ifft = np.array([ifft_recursive(row) for row in F])
+    return np.array([ifft_recursive(col) for col in rows_ifft.T]).T
 def visualize_spectrum(dft, title="Spectrum"):
     """Visualize the magnitude and phase spectrum of a Fourier transform."""
     magnitude = np.log(np.abs(dft) + 1)  # Apply log for better visualization
