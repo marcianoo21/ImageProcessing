@@ -127,83 +127,69 @@ def create_band_cut_filter(shape, low_cutoff, high_cutoff):
     """Create a band-cut filter mask."""
     return 1 - create_band_pass_filter(shape, low_cutoff, high_cutoff)
 
-def high_pass_directional_filter(image_array, direction='horizontal'):
-    # Wykonanie 2D FFT
-    dft = fft_2d(image_array)
-    dft_shifted = np.fft.fftshift(dft)  # Przesunięcie niskich częstotliwości na środek
-    
-    rows, cols = image_array.shape
-    crow, ccol = rows // 2, cols // 2  # Środek obrazu
+def high_pass_directional_filter_mask(shape, direction='horizontal', width=10):
+    """Create a high-pass directional filter mask."""
+    rows, cols = shape
+    crow, ccol = rows // 2, cols // 2  # Center of the mask
 
-    # Tworzenie maski kierunkowej
     mask = np.zeros((rows, cols), dtype=np.float32)
-    if direction == 'horizontal':  # Wykrywanie poziomych krawędzi
-        mask[crow-10:crow+10, :] = 1  # Przepuszcza tylko poziome pasmo
-    elif direction == 'vertical':  # Wykrywanie pionowych krawędzi
-        mask[:, ccol-10:ccol+10] = 1  # Przepuszcza tylko pionowe pasmo
+    if direction == 'horizontal':
+        mask[crow - width:crow + width, :] = 1  # Horizontal passband
+    elif direction == 'vertical':
+        mask[:, ccol - width:ccol + width] = 1  # Vertical passband
 
-    # Zastosowanie maski
-    filtered_dft = dft_shifted * mask
+    return mask
 
-    # Odwrócenie przesunięcia i wykonanie odwrotnej transformacji
-    dft_filtered = np.fft.ifftshift(filtered_dft)
-    image_filtered = ifft_2d(dft_filtered)
-    
-    return np.abs(image_filtered)  # Zwracamy część rzeczywistą
+def phase_modifying_filter_mask(shape, k=1, l=1):
+    """Create a phase-modifying filter mask."""
+    rows, cols = shape
+    mask = np.zeros((rows, cols), dtype=np.complex64)
 
-def phase_modifying_filter(image_array, k=1, l=1):
-    # Wykonanie 2D FFT
-    dft = fft_2d(image_array)
-    dft_shifted = np.fft.fftshift(dft)  # Przesunięcie niskich częstotliwości na środek
-    
-    rows, cols = image_array.shape
-    crow, ccol = rows // 2, cols // 2  # Środek obrazu
-
-    # Tworzenie maski fazowej P(n, m)
-    phase_mask = np.zeros((rows, cols), dtype=np.complex64)
     for n in range(rows):
         for m in range(cols):
             exponent = -1j * ((k * n * 2 * np.pi / rows) + (l * m * 2 * np.pi / cols) + ((k + l) * np.pi))
-            phase_mask[n, m] = np.exp(exponent)
+            mask[n, m] = np.exp(exponent)
 
-    # Zastosowanie maski
-    filtered_dft = dft_shifted * phase_mask
+    return mask
 
-    # Odwrócenie przesunięcia i wykonanie odwrotnej transformacji
-    dft_filtered = np.fft.ifftshift(filtered_dft)
-    image_filtered = ifft_2d(dft_filtered)
-    
-    return np.abs(image_filtered)  # Zwracamy część rzeczywistą
+def main():
+    # Load the input image
+    image = np.array(Image.open('./images/lena.bmp').convert('L'))  # Convert to grayscale
 
-def apply_log_scaling(image):
-    """Apply logarithmic scaling to enhance visibility of small values."""
-    return np.log(np.abs(image) + 1)
-
-if __name__ == "__main__":
-    image = np.array(Image.open('./images/lena_shrink_4.bmp'))  
+    # Perform 2D FFT
     start_time = time.time()
-    dft = dft_2d(image)
+    dft = fft_2d(image)
+    dft_shifted = fftshift_2d(dft)  # Shift the zero frequency component to the center
 
-    # visualize_spectrum(dft, title="Before Filtering")
+    # Visualize the spectrum before filtering
+    visualize_spectrum(dft_shifted, title="Original Spectrum")
 
-    # print(f"shape: {dft.shape}")
-    # f_filter = create_low_pass_filter(dft.shape, cutoff=362) #362 and 363
-    # filtered_dft = apply_filter(dft, f_filter)
+   # Choose one filter to apply (comment/uncomment to switch)
+    # filter_mask = create_low_pass_filter(dft.shape, cutoff=50)  # Example: Low-pass filter
+    # filter_mask = create_high_pass_filter(dft.shape, cutoff=50)  # High-pass filter
+    # filter_mask = create_band_pass_filter(dft.shape, low_cutoff=30, high_cutoff=100)  # Band-pass filter
+    # filter_mask = create_band_cut_filter(dft.shape, low_cutoff=30, high_cutoff=100)  # Band-cut filter
+    # filter_mask = high_pass_directional_filter_mask(dft.shape, direction='horizontal', width=10)  # Horizontal edges
+    # filter_mask = high_pass_directional_filter_mask(dft.shape, direction='vertical', width=10)  # Vertical edges
+    filter_mask = phase_modifying_filter_mask(dft.shape, k=1, l=1)  # Phase-modifying filter
 
-    # visualize_spectrum(filtered_dft, title="After Filtering")
+    # Default path for filters applied directly to the spectrum
+    filtered_dft = apply_filter(dft_shifted, filter_mask)
 
-    # print(f"Filtered DFT Stats - min: {np.min(filtered_dft)}, max: {np.max(filtered_dft)}, mean: {np.mean(filtered_dft)}")
+    # Visualize the spectrum after filtering
+    visualize_spectrum(filtered_dft, title="Filtered Spectrum")
 
-    filtered_image = np.real(idft_2d(dft))  
-    
-    end_time = time.time()
+    # Perform inverse FFT
+    filtered_dft_unshifted = np.fft.ifftshift(filtered_dft)  # Shift back before IFFT
+    filtered_image = np.real(ifft_2d(filtered_dft_unshifted))  # Take the real part
 
-    print(f"Execution time: {end_time - start_time:.4f} seconds")
-
-    print(f"Filtered Image Stats - min: {np.min(filtered_image)}, max: {np.max(filtered_image)}, mean: {np.mean(filtered_image)}")
-
+    # Normalize and save the filtered image
     filtered_image = np.clip(filtered_image, 0, 255).astype(np.uint8)
-
     Image.fromarray(filtered_image).save("filtered_image.bmp")
 
+    end_time = time.time()
+    print(f"Execution time: {end_time - start_time:.4f} seconds")
     print("Filtered image saved as 'filtered_image.bmp'.")
+
+if __name__ == "__main__":
+    main()

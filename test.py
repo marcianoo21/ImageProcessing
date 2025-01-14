@@ -218,7 +218,7 @@ test_matrix = np.array([[1, 2, 3, 4],
 # shifted_matrix1 = np.fft.fftshift(test_matrix)
 # Wyświetl oryginalną i przesuniętą macierz
 
-image = Image.open("./images/lena.bmp").convert("L")
+image = Image.open("./images/lenac.bmp")
 
 # Zmień rozmiar obrazu na 512x512 pikseli
 # new_size = (512, 512)
@@ -244,7 +244,7 @@ plt.figure(figsize=(10, 5))
 plt.subplot(121), plt.imshow(np.log1p(dft_magnitude), cmap='gray'), plt.title('Original FFT Magnitude Spectrum')
 plt.subplot(122), plt.imshow(np.log1p(shifted_magnitude), cmap='gray'), plt.title('Shifted FFT Magnitude Spectrum')
 plt.colorbar()
-plt.show()
+plt.savefig("output_plot.png")
 
 # def fftshift_manual(spectrum):
 #     rows, cols = len(spectrum), len(spectrum[0])  # Dimensions of the spectrum
