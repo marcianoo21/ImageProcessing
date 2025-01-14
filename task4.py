@@ -165,13 +165,13 @@ def main():
     visualize_spectrum(dft_shifted, title="Original Spectrum")
 
    # Choose one filter to apply (comment/uncomment to switch)
-    # filter_mask = create_low_pass_filter(dft.shape, cutoff=50)  # Example: Low-pass filter
+    filter_mask = create_low_pass_filter(dft.shape, cutoff=50)  # Example: Low-pass filter
     # filter_mask = create_high_pass_filter(dft.shape, cutoff=50)  # High-pass filter
     # filter_mask = create_band_pass_filter(dft.shape, low_cutoff=30, high_cutoff=100)  # Band-pass filter
     # filter_mask = create_band_cut_filter(dft.shape, low_cutoff=30, high_cutoff=100)  # Band-cut filter
     # filter_mask = high_pass_directional_filter_mask(dft.shape, direction='horizontal', width=10)  # Horizontal edges
     # filter_mask = high_pass_directional_filter_mask(dft.shape, direction='vertical', width=10)  # Vertical edges
-    filter_mask = phase_modifying_filter_mask(dft.shape, k=1, l=1)  # Phase-modifying filter
+    # filter_mask = phase_modifying_filter_mask(dft.shape, k=100, l=100)  # Phase-modifying filter
 
     # Default path for filters applied directly to the spectrum
     filtered_dft = apply_filter(dft_shifted, filter_mask)
