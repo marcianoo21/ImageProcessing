@@ -70,6 +70,22 @@ def fftshift_2d(img):
 
     return temp
 
+def ifftshift_2d(img):
+    rows, cols = img.shape
+    
+    row_mid, col_mid = rows // 2, cols // 2
+
+    temp = np.zeros_like(img)
+    # bottom-right <-> top-left
+    temp[row_mid:, col_mid:] = img[:row_mid, :col_mid]
+    temp[:row_mid, :col_mid] = img[row_mid:, col_mid:]
+    # bottom-left <-> top-right
+    temp[row_mid:, :col_mid] = img[:row_mid, col_mid:]
+    temp[:row_mid, col_mid:] = img[row_mid:, :col_mid]
+
+    return temp
+
+
 def fft_2d(img):
     rows_fft = np.array([fft_recursive(row) for row in img])
     return np.array([fft_recursive(col) for col in rows_fft.T]).T
@@ -136,6 +152,12 @@ def high_pass_directional_filter_mask(shape, direction='horizontal', width=10):
 
     return mask
 
+def high_pass_directional_filter_mask(shape, mask_path):
+    """Create a high-pass directional filter mask using an image mask."""
+    mask_image = Image.open(mask_path).convert("L")
+    mask = np.array(mask_image).astype(np.float32) / 255.0  # Normalize to [0, 1]
+    return mask
+
 def phase_modifying_filter_mask(shape, k=1, l=1):
     """Create a phase-modifying filter mask."""
     rows, cols = shape
@@ -159,14 +181,15 @@ def process_channel(image_channel, rows, cols, channel=None):
         visualize_spectrum(dft_shifted, title=f"Original Spectrum Channel {channel}")
     else:
         visualize_spectrum(dft_shifted, title="Original Spectrum")
-
+        filter_mask = high_pass_directional_filter_mask(dft.shape, './images/task4/F5mask2.png')
     # Example: Low-pass filter
     # Choose one filter to apply (comment/uncomment to switch)
     # filter_mask = create_low_pass_filter((rows, cols), cutoff=50)  # Example: Low-pass filter
-    filter_mask = create_high_pass_filter((rows, cols), cutoff=50)  # High-pass filter
-    # filter_mask = create_band_pass_filter((rows, cols), low_cutoff=30, high_cutoff=100)  # Band-pass filter
+    # filter_mask = create_high_pass_filter((rows, cols), cutoff=50)  # High-pass filter
+    # filter_mask = create_band_pass_filter((rows, cols), low_cutoff=5, high_cutoff=300)  # Band-pass filter
     # filter_mask = create_band_cut_filter((rows, cols), low_cutoff=30, high_cutoff=100)  # Band-cut filter
     # filter_mask = high_pass_directional_filter_mask((rows, cols), direction='horizontal', width=10)  # Horizontal edges
+    filter_mask = high_pass_directional_filter_mask((rows, cols), filter_mask)
     # filter_mask = high_pass_directional_filter_mask((rows, cols), direction='vertical', width=10)  # Vertical edges
     # filter_mask = phase_modifying_filter_mask((rows, cols), k=100, l=100)  # Phase-modifying filter
     filtered_dft = apply_filter(dft_shifted, filter_mask)
@@ -181,7 +204,7 @@ def process_channel(image_channel, rows, cols, channel=None):
     return filtered_channel
 
 def main():
-    image = np.array(Image.open('./images/lenac.bmp')) 
+    image = np.array(Image.open('filtered_image.bmp')) 
     is_color = len(image.shape) == 3 
 
     if is_color:
