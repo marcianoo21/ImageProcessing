@@ -148,14 +148,19 @@ def variation_coeff_2(histogram, total_pixels):
 def entropy(histogram, total_pixels):
     return -np.sum((histogram / total_pixels) * np.log2(histogram / total_pixels + 1e-10))
 
-def create_histogram(arr, output_dir="histograms", channels=None):
+def create_histogram(arr, output_dir="histograms", channels=None, assume_bgr=True):
+
     if arr is None:
         raise ValueError("Input image array is None. Ensure the image is loaded correctly.")
-    
+
     # Ensure the directory exists and is empty
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
+
+    # Convert BGR to RGB if needed
+    if assume_bgr and len(arr.shape) == 3:
+        arr = cv2.cvtColor(arr, cv2.COLOR_BGR2RGB)
 
     if len(arr.shape) == 2:  # Grayscale image
         histogram, bins = np.histogram(arr, bins=256, range=[0, 256])
@@ -202,8 +207,6 @@ def create_histogram(arr, output_dir="histograms", channels=None):
 
     else:
         raise ValueError("Unsupported image format or corrupted image.")
-
-    return arr
 
 def uniform_pdf(channel, g_min, g_max):
     histogram, _ = np.histogram(channel, bins=256, range=[0, 256])
