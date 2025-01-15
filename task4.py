@@ -109,6 +109,45 @@ def create_low_pass_filter(shape, cutoff):
                 mask[x, y] = 1
     return mask
 
+def create_high_pass_filter(shape, cutoff):
+    """Create a high-pass filter mask."""
+    return 1 - create_low_pass_filter(shape, cutoff)
+
+def create_band_pass_filter(shape, low_cutoff, high_cutoff):
+    """Create a band-pass filter mask."""
+    low_pass = create_low_pass_filter(shape, high_cutoff)
+    high_pass = create_high_pass_filter(shape, low_cutoff)
+    return low_pass * high_pass
+
+def create_band_cut_filter(shape, low_cutoff, high_cutoff):
+    """Create a band-cut filter mask."""
+    return 1 - create_band_pass_filter(shape, low_cutoff, high_cutoff)
+
+def high_pass_directional_filter_mask(shape, direction='horizontal', width=10):
+    """Create a high-pass directional filter mask."""
+    rows, cols = shape
+    crow, ccol = rows // 2, cols // 2  # Center of the mask
+
+    mask = np.zeros((rows, cols), dtype=np.float32)
+    if direction == 'horizontal':
+        mask[crow - width:crow + width, :] = 1  # Horizontal passband
+    elif direction == 'vertical':
+        mask[:, ccol - width:ccol + width] = 1  # Vertical passband
+
+    return mask
+
+def phase_modifying_filter_mask(shape, k=1, l=1):
+    """Create a phase-modifying filter mask."""
+    rows, cols = shape
+    mask = np.zeros((rows, cols), dtype=np.complex64)
+
+    for n in range(rows):
+        for m in range(cols):
+            exponent = -1j * ((k * n * 2 * np.pi / rows) + (l * m * 2 * np.pi / cols) + ((k + l) * np.pi))
+            mask[n, m] = np.exp(exponent)
+
+    return mask
+
 def process_channel(image_channel, rows, cols, channel=None):
     """Process a single channel of an image using 2D FFT and filtering."""
     if channel is not None:
@@ -122,7 +161,14 @@ def process_channel(image_channel, rows, cols, channel=None):
         visualize_spectrum(dft_shifted, title="Original Spectrum")
 
     # Example: Low-pass filter
-    filter_mask = create_low_pass_filter((rows, cols), cutoff=50)
+    # Choose one filter to apply (comment/uncomment to switch)
+    # filter_mask = create_low_pass_filter((rows, cols), cutoff=50)  # Example: Low-pass filter
+    filter_mask = create_high_pass_filter((rows, cols), cutoff=50)  # High-pass filter
+    # filter_mask = create_band_pass_filter((rows, cols), low_cutoff=30, high_cutoff=100)  # Band-pass filter
+    # filter_mask = create_band_cut_filter((rows, cols), low_cutoff=30, high_cutoff=100)  # Band-cut filter
+    # filter_mask = high_pass_directional_filter_mask((rows, cols), direction='horizontal', width=10)  # Horizontal edges
+    # filter_mask = high_pass_directional_filter_mask((rows, cols), direction='vertical', width=10)  # Vertical edges
+    # filter_mask = phase_modifying_filter_mask((rows, cols), k=100, l=100)  # Phase-modifying filter
     filtered_dft = apply_filter(dft_shifted, filter_mask)
 
     if channel is not None:
