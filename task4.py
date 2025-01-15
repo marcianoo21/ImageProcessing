@@ -70,7 +70,6 @@ def fftshift_2d(img):
 
     return temp
 
-
 def fft_2d(img):
     rows_fft = np.array([fft_recursive(row) for row in img])
     return np.array([fft_recursive(col) for col in rows_fft.T]).T
@@ -79,18 +78,15 @@ def ifft_2d(F):
     rows_ifft = np.array([ifft_recursive(row) for row in F])
     return np.array([ifft_recursive(col) for col in rows_ifft.T]).T
 
-
 def visualize_spectrum(dft, title="Spectrum"):
     """Visualize the magnitude and phase spectrum of a Fourier transform."""
     magnitude = np.log(np.abs(dft) + 1)  # Apply log for better visualization
     phase = np.angle(dft)
-
     plt.figure(figsize=(12, 6))
     plt.subplot(1, 2, 1)
     plt.title(f"{title} - Magnitude Spectrum")
     plt.imshow(magnitude, cmap='gray')
     plt.colorbar()
-
     plt.subplot(1, 2, 2)
     plt.title(f"{title} - Phase Spectrum")
     plt.imshow(phase, cmap='gray')
@@ -113,82 +109,53 @@ def create_low_pass_filter(shape, cutoff):
                 mask[x, y] = 1
     return mask
 
-def create_high_pass_filter(shape, cutoff):
-    """Create a high-pass filter mask."""
-    return 1 - create_low_pass_filter(shape, cutoff)
+def process_channel(image_channel, rows, cols, channel=None):
+    """Process a single channel of an image using 2D FFT and filtering."""
+    if channel is not None:
+        print(f"Processing channel {channel}...")
+    
+    dft = fft_2d(image_channel)
+    dft_shifted = fftshift_2d(dft)
+    if channel is not None:
+        visualize_spectrum(dft_shifted, title=f"Original Spectrum Channel {channel}")
+    else:
+        visualize_spectrum(dft_shifted, title="Original Spectrum")
 
-def create_band_pass_filter(shape, low_cutoff, high_cutoff):
-    """Create a band-pass filter mask."""
-    low_pass = create_low_pass_filter(shape, high_cutoff)
-    high_pass = create_high_pass_filter(shape, low_cutoff)
-    return low_pass * high_pass
-
-def create_band_cut_filter(shape, low_cutoff, high_cutoff):
-    """Create a band-cut filter mask."""
-    return 1 - create_band_pass_filter(shape, low_cutoff, high_cutoff)
-
-def high_pass_directional_filter_mask(shape, direction='horizontal', width=10):
-    """Create a high-pass directional filter mask."""
-    rows, cols = shape
-    crow, ccol = rows // 2, cols // 2  # Center of the mask
-
-    mask = np.zeros((rows, cols), dtype=np.float32)
-    if direction == 'horizontal':
-        mask[crow - width:crow + width, :] = 1  # Horizontal passband
-    elif direction == 'vertical':
-        mask[:, ccol - width:ccol + width] = 1  # Vertical passband
-
-    return mask
-
-def phase_modifying_filter_mask(shape, k=1, l=1):
-    """Create a phase-modifying filter mask."""
-    rows, cols = shape
-    mask = np.zeros((rows, cols), dtype=np.complex64)
-
-    for n in range(rows):
-        for m in range(cols):
-            exponent = -1j * ((k * n * 2 * np.pi / rows) + (l * m * 2 * np.pi / cols) + ((k + l) * np.pi))
-            mask[n, m] = np.exp(exponent)
-
-    return mask
-
-def main():
-    # Load the input image
-    image = np.array(Image.open('./images/lena.bmp').convert('L'))  # Convert to grayscale
-
-    # Perform 2D FFT
-    start_time = time.time()
-    dft = fft_2d(image)
-    dft_shifted = fftshift_2d(dft)  # Shift the zero frequency component to the center
-
-    # Visualize the spectrum before filtering
-    visualize_spectrum(dft_shifted, title="Original Spectrum")
-
-   # Choose one filter to apply (comment/uncomment to switch)
-    filter_mask = create_low_pass_filter(dft.shape, cutoff=50)  # Example: Low-pass filter
-    # filter_mask = create_high_pass_filter(dft.shape, cutoff=50)  # High-pass filter
-    # filter_mask = create_band_pass_filter(dft.shape, low_cutoff=30, high_cutoff=100)  # Band-pass filter
-    # filter_mask = create_band_cut_filter(dft.shape, low_cutoff=30, high_cutoff=100)  # Band-cut filter
-    # filter_mask = high_pass_directional_filter_mask(dft.shape, direction='horizontal', width=10)  # Horizontal edges
-    # filter_mask = high_pass_directional_filter_mask(dft.shape, direction='vertical', width=10)  # Vertical edges
-    # filter_mask = phase_modifying_filter_mask(dft.shape, k=100, l=100)  # Phase-modifying filter
-
-    # Default path for filters applied directly to the spectrum
+    # Example: Low-pass filter
+    filter_mask = create_low_pass_filter((rows, cols), cutoff=50)
     filtered_dft = apply_filter(dft_shifted, filter_mask)
 
-    # Visualize the spectrum after filtering
-    visualize_spectrum(filtered_dft, title="Filtered Spectrum")
+    if channel is not None:
+        visualize_spectrum(filtered_dft, title=f"Filtered Spectrum Channel {channel}")
+    else:
+        visualize_spectrum(filtered_dft, title="Filtered Spectrum")
 
-    # Perform inverse FFT
-    filtered_dft_unshifted = np.fft.ifftshift(filtered_dft)  # Shift back before IFFT
-    filtered_image = np.real(ifft_2d(filtered_dft_unshifted))  # Take the real part
+    filtered_dft_unshifted = np.fft.ifftshift(filtered_dft)
+    filtered_channel = np.real(ifft_2d(filtered_dft_unshifted))
+    return filtered_channel
 
-    # Normalize and save the filtered image
+def main():
+    image = np.array(Image.open('./images/lenac.bmp')) 
+    is_color = len(image.shape) == 3 
+
+    if is_color:
+        rows, cols, _ = image.shape
+        filtered_image = np.zeros_like(image, dtype=np.float32)
+
+        for channel in range(3): 
+            filtered_image[:, :, channel] = process_channel(
+                image[:, :, channel], rows, cols, channel=channel
+            )
+    else:
+        rows, cols = image.shape
+        filtered_image = process_channel(image, rows, cols)
+
     filtered_image = np.clip(filtered_image, 0, 255).astype(np.uint8)
-    Image.fromarray(filtered_image).save("filtered_image.bmp")
-
-    end_time = time.time()
-    print(f"Execution time: {end_time - start_time:.4f} seconds")
+    if is_color:
+        filtered_image_pil = Image.fromarray(filtered_image, mode='RGB')
+    else:
+        filtered_image_pil = Image.fromarray(filtered_image)
+    filtered_image_pil.save("filtered_image.bmp")
     print("Filtered image saved as 'filtered_image.bmp'.")
 
 if __name__ == "__main__":
